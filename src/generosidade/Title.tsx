@@ -46,14 +46,14 @@ export const Title: React.FC = () => {
   const ringsFade = 1 - ip(f, [G_MOVE + 2, G_MOVE + 14], [0, 1]);
   const glow = doneOn ? Math.sin(Math.PI * ip(f, [RING_END - 2, G_MOVE + 6], [0, 1])) : 0;
 
-  // brilho (shine) que atravessa o G / o título
+  // brilho (shine) que atravessa o G grande (a palavra formada fica estática)
   const shine = (() => {
     for (let i = 0; i < SHINE_TIMES.length; i++) {
       const t = SHINE_TIMES[i];
       const dur = i === 0 ? 12 : SHINE_DUR;
       if (f >= t && f <= t + dur) {
         const p = ip(f, [t, t + dur], [0, 1], Easing.inOut(Easing.quad));
-        return i === 0 ? lerp(G_BOUNDS[0] - 60, G_BOUNDS[2] + 60, p) : lerp(-160, TITLE_WIDTH + 160, p);
+        return lerp(G_BOUNDS[0] - 60, G_BOUNDS[2] + 60, p);
       }
     }
     return null;
@@ -226,9 +226,6 @@ export const Title: React.FC = () => {
               </g>
             );
           })}
-          {/* brilho do título inteiro (coordenadas do título) */}
-          {shine !== null && f > SHINE_TIMES[0] + 12 &&
-            LETTERS.slice(1).map((l, j) => <path key={j} d={l.d} transform={`translate(${l.x} 0)`} fill="url(#shine)" />)}
         </g>
 
         {/* Linha inferior crescendo da esquerda para a direita */}
@@ -239,13 +236,6 @@ export const Title: React.FC = () => {
               <>
                 <circle cx={lineW} cy={0} r={16} fill="url(#comet)" />
                 <circle cx={lineW} cy={0} r={3} fill="#FFFFFF" />
-              </>
-            )}
-            {/* reflexo que percorre a linha na espera */}
-            {shine !== null && f > SHINE_TIMES[0] + 12 && (
-              <>
-                <rect x={shine - 70} y={-2.5} width={140} height={5} rx={2.5} fill={C.goldLight} />
-                <circle cx={shine} cy={0} r={14} fill="url(#comet)" />
               </>
             )}
           </g>

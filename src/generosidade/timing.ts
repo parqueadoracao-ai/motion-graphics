@@ -31,5 +31,5 @@ export const LOGO_START = 252;
 export const PLACE_START = 270; // PARQUE DOS COQUEIROS
 export const HOLD_START = 300; // daqui até o fim: 5 s de tela "parada" com micro-movimentos
 
-// Brilhos periódicos durante a espera
-export const SHINE_TIMES = [RING_END - 2, 318, 396];
+// Brilho no G ao concluir o contorno
+export const SHINE_TIMES = [RING_END - 2]; // só no G grande; a palavra formada fica estática
