@@ -2,7 +2,8 @@ import { AbsoluteFill, Easing, interpolate, spring, staticFile, useCurrentFrame,
 import { Calendar } from "./Calendar";
 import { DarkIntro } from "./DarkIntro";
 import { Lines } from "./Lines";
-import { BTN_CX, BTN_CY, C, HEADLINE, IRIDESCENT, SANS } from "./theme";
+import { HORIZONTAL, LayoutCtx, VERTICAL, useLayout } from "./layout";
+import { C, HEADLINE, IRIDESCENT, SANS } from "./theme";
 import {
   LOGO_START,
   PLACE_START,
@@ -19,6 +20,7 @@ const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 // Fundo claro com manchas de luz pastel em movimento lento
 const LightBackground: React.FC = () => {
   const frame = useCurrentFrame();
+  const L = useLayout();
   const t = frame / 30;
   const blob = (x: number, y: number, r: number, color: string, o: number) => (
     <div
@@ -36,9 +38,15 @@ const LightBackground: React.FC = () => {
   );
   return (
     <AbsoluteFill style={{ background: `radial-gradient(ellipse 75% 75% at 50% 42%, ${C.bgCenter} 0%, ${C.bgEdge} 100%)`, overflow: "hidden" }}>
-      {blob(300 + Math.sin(t * 0.5) * 80, 200 + Math.cos(t * 0.4) * 50, 520, "rgba(150,130,255,0.35)", 1)}
-      {blob(1650 + Math.cos(t * 0.45) * 90, 880 + Math.sin(t * 0.5) * 60, 600, "rgba(60,200,190,0.25)", 1)}
-      {blob(1500 + Math.sin(t * 0.3) * 60, 140, 380, "rgba(224,82,156,0.16)", 1)}
+      {L.blobs.map((b, i) => {
+        // deriva lenta de cada mancha (a mesma nos dois formatos)
+        const drift = [
+          [Math.sin(t * 0.5) * 80, Math.cos(t * 0.4) * 50],
+          [Math.cos(t * 0.45) * 90, Math.sin(t * 0.5) * 60],
+          [Math.sin(t * 0.3) * 60, 0],
+        ][i];
+        return <div key={i}>{blob(b.x + drift[0], b.y + drift[1], b.r, b.color, 1)}</div>;
+      })}
     </AbsoluteFill>
   );
 };
@@ -48,10 +56,11 @@ const TITLE_WORDS = ["Agenda", "dezembro"];
 const Title: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const T = useLayout().title;
   if (frame < TITLE_IN) return null;
   const up = spring({ frame: frame - TITLE_UP, fps, config: { damping: 20 }, durationInFrames: TITLE_UP_DUR });
-  const y = interpolate(up, [0, 1], [540, 132]);
-  const scale = interpolate(up, [0, 1], [1, 0.56]);
+  const y = interpolate(up, [0, 1], [T.y0, T.y1]);
+  const scale = interpolate(up, [0, 1], [1, T.scale1]);
   let n = 0;
   return (
     <div
@@ -61,18 +70,20 @@ const Title: React.FC = () => {
         right: 0,
         top: y,
         display: "flex",
+        flexDirection: T.stacked ? "column" : "row",
+        alignItems: "center",
         justifyContent: "center",
         transform: `translateY(-50%) scale(${scale})`,
         fontFamily: HEADLINE,
         fontWeight: 800,
-        fontSize: 196,
-        lineHeight: 1.1,
+        fontSize: T.size,
+        lineHeight: T.stacked ? 1.0 : 1.1,
         letterSpacing: "-0.045em",
         whiteSpace: "nowrap",
       }}
     >
       {TITLE_WORDS.map((w, wi) => (
-        <span key={w} style={{ display: "inline-block", marginRight: wi === 0 ? "0.22em" : 0 }}>
+        <span key={w} style={{ display: "inline-block", marginRight: wi === 0 && !T.stacked ? "0.22em" : 0 }}>
           {w.split("").map((ch, ci) => {
             const local = frame - (TITLE_IN + n++ * TITLE_LETTER_STEP);
             const p = interpolate(local, [0, 14], [0, 1], { ...clamp, easing: Easing.bezier(0.2, 0.7, 0.2, 1) });
@@ -108,13 +119,13 @@ const Title: React.FC = () => {
 };
 
 // Assinatura: logo da igreja (tingida em azul-marinho) + Parque dos Coqueiros
-const LOGO_W = 500;
-const LOGO_H = (LOGO_W * 320) / 2000;
-const LOGO_Y = 852;
 const PLACE = "PARQUE DOS COQUEIROS";
 const Footer: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const L = useLayout();
+  const { logoW: LOGO_W, logoY: LOGO_Y } = L.footer;
+  const LOGO_H = (LOGO_W * 320) / 2000;
   if (frame < LOGO_START) return null;
   const lp = interpolate(frame, [LOGO_START, LOGO_START + 24], [0, 1], { ...clamp, easing: Easing.bezier(0.3, 0, 0.1, 1) });
   const ls = spring({ frame: frame - LOGO_START, fps, config: { damping: 200 } });
@@ -125,7 +136,7 @@ const Footer: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          left: 960 - LOGO_W / 2,
+          left: L.CX - LOGO_W / 2,
           top: LOGO_Y,
           width: LOGO_W,
           height: LOGO_H,
@@ -183,10 +194,12 @@ const RINGS = [
   { delay: 14, color: "#5FD6C6", glow: "rgba(20,184,166,0.4)", width: 1.2 },
 ];
 const RING_DUR = 36;
-const RING_MAX = 1250;
+
 
 const LightReveal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const frame = useCurrentFrame();
+  const L = useLayout();
+  const { cx: BTN_CX, cy: BTN_CY } = L.btn;
   if (frame < TRANS_START) return null;
   const fade = interpolate(frame, [TRANS_START + 10, TRANS_END - 6], [0, 1], { ...clamp, easing: Easing.inOut(Easing.sin) });
   // brilho lilás que cresce do botão: a passagem fica luminosa (não acinzentada)
@@ -199,7 +212,7 @@ const LightReveal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <AbsoluteFill
           style={{
             pointerEvents: "none",
-            background: `radial-gradient(${bloomR}% ${bloomR}% at ${(BTN_CX / 1920) * 100}% ${(BTN_CY / 1080) * 100}%, rgba(246,242,255,${bloomT}) 0%, rgba(214,196,255,${0.9 * bloomT}) 35%, rgba(150,120,230,${0.5 * bloomT}) 65%, rgba(40,30,80,0) 100%)`,
+            background: `radial-gradient(${bloomR}% ${bloomR}% at ${(BTN_CX / L.W) * 100}% ${(BTN_CY / L.H) * 100}%, rgba(246,242,255,${bloomT}) 0%, rgba(214,196,255,${0.9 * bloomT}) 35%, rgba(150,120,230,${0.5 * bloomT}) 65%, rgba(40,30,80,0) 100%)`,
           }}
         />
       )}
@@ -210,14 +223,14 @@ const LightReveal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           style={{
             pointerEvents: "none",
             opacity: flare * 0.6,
-            background: `radial-gradient(38% 34% at ${(BTN_CX / 1920) * 100}% ${(BTN_CY / 1080) * 100}%, rgba(255,255,255,0.9) 0%, rgba(214,180,255,0.45) 30%, rgba(63,123,255,0.12) 55%, rgba(255,255,255,0) 80%)`,
+            background: `radial-gradient(38% 34% at ${(BTN_CX / L.W) * 100}% ${(BTN_CY / L.H) * 100}%, rgba(255,255,255,0.9) 0%, rgba(214,180,255,0.45) 30%, rgba(63,123,255,0.12) 55%, rgba(255,255,255,0) 80%)`,
           }}
         />
       )}
       {RINGS.map((rg, i) => {
         const w = interpolate(frame, [TRANS_START + rg.delay, TRANS_START + rg.delay + RING_DUR], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
         if (w <= 0 || w >= 1) return null;
-        const r = 40 + RING_MAX * w;
+        const r = 40 + Math.max(L.W, L.H) * 0.66 * w;
         return (
           <div
             key={i}
@@ -239,7 +252,13 @@ const LightReveal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
-export const AgendaDezembro: React.FC = () => {
+export const AgendaDezembro: React.FC<{ vertical?: boolean }> = ({ vertical = false }) => (
+  <LayoutCtx.Provider value={vertical ? VERTICAL : HORIZONTAL}>
+    <Scenes />
+  </LayoutCtx.Provider>
+);
+
+const Scenes: React.FC = () => {
   const frame = useCurrentFrame();
   return (
     <AbsoluteFill style={{ background: C.night }}>

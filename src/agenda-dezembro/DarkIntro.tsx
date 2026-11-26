@@ -1,6 +1,7 @@
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { LineHand, TIP } from "./Hand";
-import { BTN_CX, BTN_CY, BTN_SIZE, C } from "./theme";
+import { useLayout } from "./layout";
+import { C } from "./theme";
 import { BTN_SPIN, BTN_SPIN_DUR, HAND_ARRIVE, HAND_GONE, HAND_IN, HAND_OUT, PRESS, TRANS_START } from "./timing";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
@@ -26,7 +27,7 @@ const PowerButton: React.FC = () => {
   // cena 1: o botão entra girando (meia volta em Y + giro no plano) e assenta
   const spin = spring({ frame: frame - BTN_SPIN, fps, config: { damping: 15, stiffness: 70 }, durationInFrames: BTN_SPIN_DUR });
   const appear = interpolate(frame, [BTN_SPIN, BTN_SPIN + 10], [0, 1], clamp);
-  const s = BTN_SIZE;
+  const { cx: BTN_CX, cy: BTN_CY, size: s } = useLayout().btn;
   return (
     <div
       style={{
@@ -96,11 +97,13 @@ const PowerButton: React.FC = () => {
   );
 };
 
-const HAND_SCALE = 0.62;
 const DIR = { x: 0.56, y: 0.83 }; // direção do braço (da ponta do dedo para o pulso)
 
 export const DarkIntro: React.FC = () => {
   const frame = useCurrentFrame();
+  const L = useLayout();
+  const { cx: BTN_CX, cy: BTN_CY } = L.btn;
+  const HAND_SCALE = L.handScale;
   const { fps } = useVideoConfig();
   const light = useLight();
   // trajetória da ponta do dedo
@@ -108,7 +111,8 @@ export const DarkIntro: React.FC = () => {
   const press = interpolate(frame, [PRESS - 4, PRESS, PRESS + 6], [0, 14, 6], clamp);
   const outP = interpolate(frame, [HAND_OUT, HAND_GONE], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
   // a mão desliza na diagonal (ao longo do braço), de baixo/direita até o botão
-  const along = (1 - inP) * 900 - press + outP * 900;
+  const travel = L.vertical ? 1500 : 900; // distância para a mão começar fora da tela
+  const along = (1 - inP) * travel - press + outP * travel;
   const tipX = BTN_CX + 14 + DIR.x * along;
   const tipY = BTN_CY + 18 + DIR.y * along;
   const ambient = interpolate(frame, [0, 20], [0, 1], clamp);
@@ -122,7 +126,7 @@ export const DarkIntro: React.FC = () => {
       />
       <PowerButton />
       {frame >= HAND_IN && frame < HAND_GONE && (
-        <svg width={1920} height={1080} style={{ position: "absolute", overflow: "visible" }}>
+        <svg width={L.W} height={L.H} style={{ position: "absolute", overflow: "visible" }}>
           <g transform={`translate(${tipX} ${tipY}) scale(${HAND_SCALE}) translate(${-TIP.x} ${-TIP.y})`}>
             <LineHand light={light} draw={interpolate(frame, [HAND_IN, HAND_ARRIVE + 2], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) })} />
           </g>

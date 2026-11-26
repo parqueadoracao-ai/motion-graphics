@@ -1,30 +1,6 @@
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import {
-  C,
-  CELL_H,
-  CELL_W,
-  CENTER_DX,
-  CENTER_DY,
-  CENTER_SCALE,
-  DAYS,
-  DISPLAY,
-  EVENTOS,
-  GAP,
-  GRID_CX,
-  GRID_CY,
-  GRID_X0,
-  GRID_Y0,
-  IRIDESCENT,
-  LIST_W,
-  LIST_X,
-  ROW_H,
-  SANS,
-  WEEKDAYS_LONG,
-  WEEKDAYS_SHORT,
-  cellRect,
-  rowY,
-  weekdayOf,
-} from "./theme";
+import { useLayout } from "./layout";
+import { C, DAYS, DISPLAY, EVENTOS, IRIDESCENT, SANS, WEEKDAYS_LONG, WEEKDAYS_SHORT, weekdayOf } from "./theme";
 import {
   CARD_OPEN,
   EVENT_START,
@@ -41,13 +17,15 @@ import {
 } from "./timing";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
-const SLAB = 230; // lado do bloco na fase 3D
 const eventStart = (i: number) => EVENT_START + i * EVENT_STEP;
 const eventIndexOf = (day: number) => EVENTOS.findIndex((e) => e.day === day);
 
 // Bloco de vidro: fileira 3D iluminada → célula do calendário
 const Slab: React.FC<{ day: number }> = ({ day }) => {
   const frame = useCurrentFrame();
+  const L = useLayout();
+  const { cellW: CELL_W, cellH: CELL_H } = L.grid;
+  const SLAB = L.slab.size;
   const { fps } = useVideoConfig();
   const i = day - 1;
   const n = DAYS;
@@ -65,14 +43,14 @@ const Slab: React.FC<{ day: number }> = ({ day }) => {
 
   // fileira 3D: diagonal suave com onda
   const wave = Math.sin(frame * 0.09 - i * 0.38);
-  const rowX = GRID_CX + (i - mid) * 40;
-  const rowY = GRID_CY + 40 + (i - mid) * -3.5 + wave * 16 + (1 - enter) * 420;
+  const rowX = L.gridCX + (i - mid) * L.slab.spacing;
+  const rowY = L.gridCY + 40 + (i - mid) * -3.5 + wave * 16 + (1 - enter) * 420;
   const rotY = 58 + Math.sin(frame * 0.06 - i * 0.3) * 9;
   // luz que percorre a fileira (faixa iridescente)
   const band = interpolate(frame, [SLABS_IN, ORGANIZE + 20], [-8, n + 6], clamp);
   const k = Math.exp(-(((i - band) / 3.4) ** 2));
 
-  const { x: gx, y: gy } = cellRect(day);
+  const { x: gx, y: gy } = L.cellRect(day);
   const cx = interpolate(org, [0, 1], [rowX, gx + CELL_W / 2]);
   const cy = interpolate(org, [0, 1], [rowY, gy + CELL_H / 2]);
   const w = interpolate(org, [0, 1], [SLAB, CELL_W]);
@@ -143,7 +121,7 @@ const Slab: React.FC<{ day: number }> = ({ day }) => {
             top: 10,
             fontFamily: DISPLAY,
             fontWeight: 600,
-            fontSize: 30,
+            fontSize: L.grid.dayFont,
             color: evP > 0.5 ? "#FFFFFF" : C.ink,
             opacity: numberIn,
           }}
@@ -158,6 +136,10 @@ const Slab: React.FC<{ day: number }> = ({ day }) => {
 // Bloco que sai do calendário e vira o cartão do anúncio
 const EventCard: React.FC<{ i: number }> = ({ i }) => {
   const frame = useCurrentFrame();
+  const L = useLayout();
+  const { cellW: CELL_W, cellH: CELL_H } = L.grid;
+  const { x: LIST_X, w: LIST_W, rowH: ROW_H } = L.list;
+  const rowY = L.rowY;
   const { fps } = useVideoConfig();
   const e = EVENTOS[i];
   const t0 = eventStart(i);
@@ -165,7 +147,7 @@ const EventCard: React.FC<{ i: number }> = ({ i }) => {
   const fly = spring({ frame: frame - t0 - 2, fps, config: { damping: 17, mass: 0.8 }, durationInFrames: FLY_DUR });
   const open = interpolate(frame, [t0 + CARD_OPEN, t0 + CARD_OPEN + 16], [0, 1], { ...clamp, easing: Easing.bezier(0.25, 0, 0.1, 1) });
   const txt = (d: number) => interpolate(frame, [t0 + CARD_OPEN + 6 + d, t0 + CARD_OPEN + 18 + d], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const { x: cx0, y: cy0 } = cellRect(e.day);
+  const { x: cx0, y: cy0 } = L.cellRect(e.day);
   const bx = interpolate(fly, [0, 1], [cx0, LIST_X]);
   const by = interpolate(fly, [0, 1], [cy0, rowY(i)]);
   const bw = interpolate(fly, [0, 1], [CELL_W, ROW_H]);
@@ -177,14 +159,18 @@ const EventCard: React.FC<{ i: number }> = ({ i }) => {
   const lineOut = interpolate(frame, [t0 + 16, t0 + 30], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
   const x1 = cx0 + CELL_W / 2;
   const y1 = cy0 + CELL_H / 2;
-  const x2 = LIST_X;
-  const y2 = rowY(i) + ROW_H / 2;
+  // destino: lateral do cartão (horizontal) ou topo do selo (vertical)
+  const x2 = L.vertical ? LIST_X + ROW_H / 2 : LIST_X;
+  const y2 = L.vertical ? rowY(i) : rowY(i) + ROW_H / 2;
+  const curve = L.vertical
+    ? `M ${x1} ${y1} C ${x1 - 40} ${y1 + 140}, ${x2 + 60} ${y2 - 160}, ${x2} ${y2}`
+    : `M ${x1} ${y1} C ${x1 + 120} ${y1 - 60}, ${x2 - 140} ${y2}, ${x2} ${y2}`;
   return (
     <>
       {lineOut < 1 && (
-        <svg width={1920} height={1080} style={{ position: "absolute", left: 0, top: 0 }}>
+        <svg width={L.W} height={L.H} style={{ position: "absolute", left: 0, top: 0 }}>
           <path
-            d={`M ${x1} ${y1} C ${x1 + 120} ${y1 - 60}, ${x2 - 140} ${y2}, ${x2} ${y2}`}
+            d={curve}
             fill="none"
             stroke={e.to}
             strokeWidth={1.4}
@@ -223,12 +209,12 @@ const EventCard: React.FC<{ i: number }> = ({ i }) => {
             background: `linear-gradient(100deg, rgba(255,255,255,0), ${e.from}33, rgba(255,255,255,0))`,
           }}
         />
-        <div style={{ position: "absolute", left: ROW_H + 34, top: 15, whiteSpace: "nowrap" }}>
+        <div style={{ position: "absolute", left: ROW_H + 30, top: L.list.textTop, whiteSpace: "nowrap" }}>
           <div
             style={{
               fontFamily: DISPLAY,
               fontWeight: 600,
-              fontSize: 44,
+              fontSize: L.list.nameSize,
               lineHeight: 1.05,
               color: C.ink,
               letterSpacing: "-0.01em",
@@ -243,7 +229,7 @@ const EventCard: React.FC<{ i: number }> = ({ i }) => {
               marginTop: 6,
               fontFamily: SANS,
               fontWeight: 700,
-              fontSize: 17,
+              fontSize: L.list.wdSize,
               letterSpacing: 4,
               textTransform: "uppercase",
               color: C.soft,
@@ -274,7 +260,7 @@ const EventCard: React.FC<{ i: number }> = ({ i }) => {
           transform: `scale(${1 + 0.1 * Math.sin(fly * Math.PI)})`,
         }}
       >
-        <div style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: interpolate(fly, [0, 1], [30, 46]), lineHeight: 1 }}>{e.day}</div>
+        <div style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: interpolate(fly, [0, 1], [L.grid.dayFont, L.list.badgeFont]), lineHeight: 1 }}>{e.day}</div>
         <div style={{ fontFamily: SANS, fontWeight: 800, fontSize: 14, letterSpacing: 3, marginTop: 4, opacity: fly, marginRight: -3 }}>DEZ</div>
       </div>
     </>
@@ -283,11 +269,13 @@ const EventCard: React.FC<{ i: number }> = ({ i }) => {
 
 export const Calendar: React.FC = () => {
   const frame = useCurrentFrame();
+  const L = useLayout();
+  const { cellW: CELL_W, gap: GAP, x0: GRID_X0, y0: GRID_Y0 } = L.grid;
   if (frame < SLABS_IN - 2) return null;
   const shift = interpolate(frame, [SHIFT, SHIFT + SHIFT_DUR], [0, 1], { ...clamp, easing: Easing.bezier(0.6, 0, 0.2, 1) });
-  const s = interpolate(shift, [0, 1], [CENTER_SCALE, 1]);
-  const dx = interpolate(shift, [0, 1], [CENTER_DX, 0]);
-  const dy = interpolate(shift, [0, 1], [CENTER_DY, 0]);
+  const s = interpolate(shift, [0, 1], [L.grid.centerScale, 1]);
+  const dx = interpolate(shift, [0, 1], [L.centerDX, 0]);
+  const dy = interpolate(shift, [0, 1], [L.centerDY, 0]);
   const header = interpolate(frame, [HEADER_IN, HEADER_IN + 14], [0, 1], clamp);
   const shadow = interpolate(frame, [SLABS_IN, SLABS_IN + 20, ORGANIZE, ORGANIZE + 30], [0, 1, 1, 0], clamp);
   return (
@@ -295,7 +283,7 @@ export const Calendar: React.FC = () => {
       <AbsoluteFill
         style={{
           transformStyle: "preserve-3d",
-          transformOrigin: `${GRID_CX}px ${GRID_CY}px`,
+          transformOrigin: `${L.gridCX}px ${L.gridCY}px`,
           transform: `translate(${dx}px, ${dy}px) scale(${s})`,
         }}
       >
@@ -303,9 +291,9 @@ export const Calendar: React.FC = () => {
         <div
           style={{
             position: "absolute",
-            left: GRID_CX - 720,
-            top: GRID_CY + 120,
-            width: 1440,
+            left: L.gridCX - L.W * 0.375,
+            top: L.gridCY + 120,
+            width: L.W * 0.75,
             height: 150,
             borderRadius: "50%",
             background: "radial-gradient(ellipse, rgba(60,72,120,0.28), rgba(60,72,120,0) 70%)",
@@ -326,7 +314,7 @@ export const Calendar: React.FC = () => {
               textAlign: "center",
               fontFamily: SANS,
               fontWeight: 800,
-              fontSize: 19,
+              fontSize: L.grid.headerFont,
               letterSpacing: 2,
               color: c === 0 ? C.rose : C.soft,
               opacity: interpolate(frame, [HEADER_IN + c * 2, HEADER_IN + c * 2 + 10], [0, 1], clamp),

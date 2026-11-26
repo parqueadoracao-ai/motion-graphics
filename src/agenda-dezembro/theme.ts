@@ -58,38 +58,3 @@ export const MONTH = 11; // dezembro (0-based)
 export const DAYS = 31;
 export const OFFSET = new Date(YEAR, MONTH, 1).getDay(); // 1º de dezembro de 2026 = terça
 export const weekdayOf = (day: number) => (OFFSET + day - 1) % 7;
-
-// Geometria final do calendário (posição à esquerda, escala 1)
-export const CELL_W = 100;
-export const CELL_H = 88;
-export const GAP = 12;
-export const GRID_X0 = 150;
-export const GRID_Y0 = 298;
-export const ROWS = Math.ceil((OFFSET + DAYS) / 7);
-export const GRID_W = 7 * CELL_W + 6 * GAP;
-export const GRID_H = ROWS * CELL_H + (ROWS - 1) * GAP;
-export const cellRect = (day: number) => {
-  const idx = OFFSET + day - 1;
-  return {
-    x: GRID_X0 + (idx % 7) * (CELL_W + GAP),
-    y: GRID_Y0 + Math.floor(idx / 7) * (CELL_H + GAP),
-  };
-};
-export const GRID_CX = GRID_X0 + GRID_W / 2;
-export const GRID_CY = GRID_Y0 + GRID_H / 2;
-// Estado centralizado (antes de ir para a esquerda)
-export const CENTER_SCALE = 1.18;
-export const CENTER_DX = 960 - GRID_CX;
-export const CENTER_DY = 612 - GRID_CY;
-
-// Lista de anúncios à direita
-export const LIST_X = 1010;
-export const LIST_W = 770;
-export const ROW_H = 104;
-export const ROW_GAP = 22;
-export const rowY = (i: number) => GRID_Y0 - 6 + i * (ROW_H + ROW_GAP);
-
-// Botão da cena escura
-export const BTN_CX = 960;
-export const BTN_CY = 470;
-export const BTN_SIZE = 230;

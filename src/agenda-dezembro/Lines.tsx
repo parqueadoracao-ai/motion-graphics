@@ -1,22 +1,22 @@
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { C, GRID_Y0, GRID_H, SANS } from "./theme";
+import { useLayout } from "./layout";
+import { C, SANS } from "./theme";
 import { SHIFT, SHIFT_DUR, SLABS_IN, TITLE_FORMED, TITLE_IN, TITLE_UP, TITLE_UP_DUR, TRANS_END } from "./timing";
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
-const CX = 960;
-const CY = 540;
-const R = 430;
 const MONTHS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 
 // Relógio-calendário em linhas finas: 12 meses no lugar das horas; o ponteiro para em dezembro
 const YearDial: React.FC = () => {
   const frame = useCurrentFrame();
+  const L = useLayout();
+  const { cx: CX, cy: CY, R } = L.dial;
   const { fps } = useVideoConfig();
   const fade = interpolate(frame, [TRANS_END - 4, TRANS_END + 20], [0, 1], clamp);
   const recede = interpolate(frame, [SLABS_IN - 10, SLABS_IN + 30], [1, 0.45], clamp);
   const k = fade * recede;
   const grow = interpolate(frame, [TRANS_END - 4, TRANS_END + 30], [0.9, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const scale = grow * interpolate(frame, [SLABS_IN - 10, SLABS_IN + 40], [1, 1.12], { ...clamp, easing: Easing.inOut(Easing.cubic) });
+  const scale = grow * interpolate(frame, [SLABS_IN - 10, SLABS_IN + 40], [1, L.dial.recede], { ...clamp, easing: Easing.inOut(Easing.cubic) });
   // ponteiro: gira e assenta em dezembro (topo)
   const settle = spring({ frame: frame - TITLE_IN, fps, config: { damping: 16, stiffness: 50 }, durationInFrames: TITLE_FORMED - TITLE_IN + 24 });
   const pointer = interpolate(settle, [0, 1], [-330, 0]);
@@ -24,7 +24,7 @@ const YearDial: React.FC = () => {
   const sweep = (frame / fps) * 24; // arco iridescente percorrendo o anel
   const decGlow = interpolate(settle, [0.85, 1], [0, 1], clamp);
   return (
-    <svg width={1920} height={1080} style={{ position: "absolute", opacity: k }}>
+    <svg width={L.W} height={L.H} style={{ position: "absolute", opacity: k }}>
       <defs>
         <linearGradient id="dialSweep" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor={C.teal} stopOpacity="0" />
@@ -102,46 +102,64 @@ const YearDial: React.FC = () => {
   );
 };
 
-// Linhas editoriais ao lado do título (quando ele está no topo) e divisória vertical
-const TITLE_HALF_W = 470; // meia largura do título já reduzido, com respiro
+// Linhas editoriais junto do título (quando ele está no topo) e divisória entre calendário e lista
+const TITLE_HALF_W = 470; // meia largura do título já reduzido, com respiro (horizontal)
 const Rules: React.FC = () => {
   const frame = useCurrentFrame();
+  const L = useLayout();
+  const CX = L.CX;
   const p = interpolate(frame, [TITLE_UP + TITLE_UP_DUR - 6, TITLE_UP + TITLE_UP_DUR + 22], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
   const v = interpolate(frame, [SHIFT + SHIFT_DUR - 4, SHIFT + SHIFT_DUR + 22], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
-  const y = 132;
-  const left0 = 150;
-  const leftEnd = CX - TITLE_HALF_W;
-  const len = (leftEnd - left0) * p;
+  const margin = L.grid.x0;
+  // horizontal: linhas dos dois lados do título; vertical: uma linha acima do título
+  const y = L.vertical ? 214 : 132;
+  const gapHalf = L.vertical ? 0 : TITLE_HALF_W;
+  const leftEnd = CX - gapHalf;
+  const len = (leftEnd - margin) * p;
   const label: React.CSSProperties = {
     position: "absolute",
     top: y - 34,
     fontFamily: SANS,
     fontWeight: 700,
-    fontSize: 15,
+    fontSize: L.vertical ? 17 : 15,
     letterSpacing: 5,
     color: C.soft,
     opacity: interpolate(p, [0.4, 1], [0, 1], clamp),
     whiteSpace: "nowrap",
   };
+  const gridBottom = L.grid.y0 + L.gridH;
   return (
     <>
       <div style={{ position: "absolute", left: leftEnd - len, top: y, width: len, height: 1, background: `linear-gradient(90deg, rgba(18,23,43,0), rgba(18,23,43,0.28))` }} />
-      <div style={{ position: "absolute", left: CX + TITLE_HALF_W, top: y, width: len, height: 1, background: `linear-gradient(90deg, rgba(18,23,43,0.28), rgba(18,23,43,0))` }} />
+      <div style={{ position: "absolute", left: CX + gapHalf, top: y, width: len, height: 1, background: `linear-gradient(90deg, rgba(18,23,43,0.28), rgba(18,23,43,0))` }} />
       <div style={{ position: "absolute", left: leftEnd - len - 4, top: y - 3, width: 7, height: 7, borderRadius: 4, background: C.violet, opacity: p }} />
-      <div style={{ position: "absolute", left: CX + TITLE_HALF_W + len - 3, top: y - 3, width: 7, height: 7, borderRadius: 4, background: C.teal, opacity: p }} />
-      <div style={{ ...label, left: left0 }}>2026</div>
-      <div style={{ ...label, right: 1920 - 1770, marginRight: -5 }}>PROGRAMAÇÃO</div>
+      <div style={{ position: "absolute", left: CX + gapHalf + len - 3, top: y - 3, width: 7, height: 7, borderRadius: 4, background: C.teal, opacity: p }} />
+      <div style={{ ...label, left: margin }}>2026</div>
+      <div style={{ ...label, right: margin, marginRight: -5 }}>PROGRAMAÇÃO</div>
       {/* divisória entre calendário e lista */}
-      <div
-        style={{
-          position: "absolute",
-          left: 964,
-          top: GRID_Y0 - 40 + (1 - v) * (GRID_H / 2),
-          width: 1,
-          height: (GRID_H + 80) * v,
-          background: "linear-gradient(180deg, rgba(18,23,43,0), rgba(18,23,43,0.22), rgba(18,23,43,0))",
-        }}
-      />
+      {L.vertical ? (
+        <div
+          style={{
+            position: "absolute",
+            top: Math.round((gridBottom + L.list.y0) / 2),
+            left: margin + 40 + (1 - v) * (L.gridW / 2 - 40),
+            width: (L.gridW - 80) * v,
+            height: 1,
+            background: "linear-gradient(90deg, rgba(18,23,43,0), rgba(18,23,43,0.22), rgba(18,23,43,0))",
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            left: 964,
+            top: L.grid.y0 - 40 + (1 - v) * (L.gridH / 2),
+            width: 1,
+            height: (L.gridH + 80) * v,
+            background: "linear-gradient(180deg, rgba(18,23,43,0), rgba(18,23,43,0.22), rgba(18,23,43,0))",
+          }}
+        />
+      )}
     </>
   );
 };

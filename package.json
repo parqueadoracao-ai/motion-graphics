@@ -7,7 +7,8 @@
     "dev": "remotion studio",
     "sfx": "python3 scripts/make-whoosh.py",
     "render": "remotion render CartelaTeste out/cartela-teste.mp4",
-    "render:agenda-dezembro": "remotion render AgendaDezembro out/agenda-dezembro.mp4 --muted"
+    "render:agenda-dezembro": "remotion render AgendaDezembro out/agenda-dezembro.mp4 --muted",
+    "render:agenda-dezembro-vertical": "remotion render AgendaDezembroVertical out/agenda-dezembro-vertical.mp4 --muted"
   },
   "dependencies": {
     "@remotion/cli": "4.0.547",
