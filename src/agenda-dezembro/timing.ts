@@ -2,12 +2,16 @@
 export const FPS = 30;
 export const DURATION = 600;
 
-// Cena escura: botão desligado, mão entra e aperta
-export const HAND_IN = 10; // mão começa a subir
-export const HAND_ARRIVE = 44; // ponta do dedo encosta no botão
-export const PRESS = 48; // clique (botão liga)
-export const HAND_OUT = 60; // mão recua
-export const HAND_GONE = 84;
+// Cena 1: botão (desligado) entra girando no escuro
+export const BTN_SPIN = 2;
+export const BTN_SPIN_DUR = 30;
+
+// Cena 2: a mão chega e aperta
+export const HAND_IN = 22; // mão começa a subir
+export const HAND_ARRIVE = 50; // ponta do dedo encosta no botão
+export const PRESS = 54; // clique (botão liga)
+export const HAND_OUT = 64; // mão recua
+export const HAND_GONE = 88;
 
 // Transição: a luz do botão se expande e vira o ambiente claro
 export const TRANS_START = 74;
