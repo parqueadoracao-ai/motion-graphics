@@ -307,6 +307,7 @@ const LOGO_W = 560;
 const LOGO_H = (LOGO_W * 320) / 2000;
 const LOGO_Y = 699; // mesma distância título→19h (91 px de tinta) entre 19h→logo
 const PLACE = "PARQUE DOS COQUEIROS";
+const PLACE_DIAMOND = 5; // losango do "19h" (10 px) em escala proporcional ao letreiro menor
 
 const Footer: React.FC = () => {
   const frame = useCurrentFrame();
@@ -336,17 +337,25 @@ const Footer: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          top: LOGO_Y + LOGO_H + 81, // e de novo 91 px entre logo→nome
+          top: LOGO_Y + LOGO_H + 18, // logo abaixo da logo, só um respiro (dentro do círculo)
           left: 0,
           right: 0,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          gap: 26,
+          gap: 18,
           fontFamily: SANS,
         }}
       >
-        <div style={{ width: 90 * deco, height: 1.5, background: `linear-gradient(90deg, rgba(255,194,75,0), ${C.amber})` }} />
+        <div
+          style={{
+            width: PLACE_DIAMOND,
+            height: PLACE_DIAMOND,
+            transform: `rotate(45deg) scale(${deco})`,
+            background: C.amber,
+            boxShadow: `0 0 8px ${C.amber}`,
+          }}
+        />
         <div style={{ fontSize: 26, fontWeight: 600, color: C.soft, letterSpacing: 10, whiteSpace: "pre" }}>
           {PLACE.split("").map((ch, i) => {
             const local = frame - (PLACE_START + i * 0.9);
@@ -357,7 +366,7 @@ const Footer: React.FC = () => {
                   display: "inline-block",
                   opacity: interpolate(local, [0, 8], [0, 1], clamp),
                   transform: `translateY(${(1 - interpolate(local, [0, 12], [0, 1], { ...clamp, easing: Easing.out(Easing.back(2)) })) * 14}px)`,
-                  marginRight: i === PLACE.length - 1 ? -10 : 0,
+                  marginRight: i === PLACE.length - 1 ? -6 : 0,
                 }}
               >
                 {ch}
@@ -365,7 +374,15 @@ const Footer: React.FC = () => {
             );
           })}
         </div>
-        <div style={{ width: 90 * deco, height: 1.5, background: `linear-gradient(90deg, ${C.violet}, rgba(155,107,255,0))` }} />
+        <div
+          style={{
+            width: PLACE_DIAMOND,
+            height: PLACE_DIAMOND,
+            transform: `rotate(45deg) scale(${deco})`,
+            background: C.violet,
+            boxShadow: `0 0 8px ${C.violet}`,
+          }}
+        />
       </div>
     </>
   );
