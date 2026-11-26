@@ -1,0 +1,21 @@
+{
+  "name": "motion-graphics",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Projeto Remotion — cartela de teste",
+  "scripts": {
+    "dev": "remotion studio",
+    "sfx": "python3 scripts/make-whoosh.py",
+    "render": "remotion render CartelaTeste out/cartela-teste.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.547",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.547"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}
