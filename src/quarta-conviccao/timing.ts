@@ -1,10 +1,9 @@
 // Linha do tempo da "Quarta da Convicção" (em frames, 30 fps)
 export const FPS = 30;
 
-// Abertura — fundo aparece junto com o relógio entrando (starglow só na viagem)
+// Abertura — fundo aparece junto com o relógio entrando (só movimento, sem efeitos de luz)
 export const BG_IN_END = 45;
 export const DIAL_IN_END = 46; // relógio chega ao centro
-export const DIAL_GLOW_OFF = 60; // starglow já apagado
 
 // Cena 1 — "Não espere o domingo..."
 export const S1_START = 50;

@@ -305,7 +305,7 @@ const Scene3: React.FC = () => {
 // ---------- Assinatura: logo da igreja + local (mesma arte e letreiro do Generosidade) ----------
 const LOGO_W = 560;
 const LOGO_H = (LOGO_W * 320) / 2000;
-const LOGO_Y = 790;
+const LOGO_Y = 699; // mesma distância título→19h (91 px de tinta) entre 19h→logo
 const PLACE = "PARQUE DOS COQUEIROS";
 
 const Footer: React.FC = () => {
@@ -336,7 +336,7 @@ const Footer: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          top: LOGO_Y + LOGO_H + 30,
+          top: LOGO_Y + LOGO_H + 81, // e de novo 91 px entre logo→nome
           left: 0,
           right: 0,
           display: "flex",
