@@ -26,4 +26,4 @@ export const FINAL_START = 330;
 export const LETTER_STEP = 2;
 export const FINAL_LINE = 370;
 export const FINAL_TIME = 378; // "19h"
-export const FADE_OUT_START = 462;
+// Sem fade: o título fica inteiro até o último frame (o Lumen congela nele durante os avisos)

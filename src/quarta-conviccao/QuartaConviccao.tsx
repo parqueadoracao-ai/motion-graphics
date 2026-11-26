@@ -1,6 +1,5 @@
 import React from "react";
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { Whoosh } from "../Whoosh";
 import { Background } from "./Background";
 import { SANS, SERIF } from "./fonts";
 import { BibleIcon, ClockIcon, PrayerIcon } from "./Icons";
@@ -8,7 +7,6 @@ import { KIcon, KWord } from "./Kinetic";
 import { C, DUSK, duskAt } from "./palette";
 import {
   DURATION,
-  FADE_OUT_START,
   FINAL_LINE,
   FINAL_START,
   FINAL_TIME,
@@ -192,7 +190,7 @@ const Scene3: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const zoom = spring({ frame: frame - FINAL_START, fps, config: { damping: 30, stiffness: 50 } });
-  const settle = interpolate(frame, [FINAL_START, FADE_OUT_START], [0, 1], clamp);
+  const settle = interpolate(frame, [FINAL_START, DURATION - 1], [0, 1], clamp);
   const line = interpolate(frame, [FINAL_LINE, FINAL_LINE + 26], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
   const t = spring({ frame: frame - FINAL_TIME, fps, config: { damping: 15, stiffness: 120 } });
   const glow = interpolate(frame, [FINAL_START + 40, FINAL_START + 80], [0, 1], clamp) * (0.75 + 0.25 * Math.sin(frame / 20));
@@ -278,25 +276,13 @@ const Scene3: React.FC = () => {
 
 export const QuartaConviccao: React.FC = () => {
   const frame = useCurrentFrame();
-  const fade = interpolate(frame, [FADE_OUT_START, DURATION - 1], [1, 0], clamp);
   return (
     <AbsoluteFill style={{ backgroundColor: "#0B0F17", fontFamily: SANS }}>
-      <AbsoluteFill style={{ opacity: fade }}>
-        <Background />
-        {frame < S2A_START + 10 && <Scene1 />}
-        {frame >= S2A_START - 2 && frame < FINAL_START && <Scene2 />}
-        {frame >= FINAL_START - 2 && <Scene3 />}
-      </AbsoluteFill>
+      <Background />
+      {frame < S2A_START + 10 && <Scene1 />}
+      {frame >= S2A_START - 2 && frame < FINAL_START && <Scene2 />}
+      {frame >= FINAL_START - 2 && <Scene3 />}
 
-      {/* um whoosh por entrada de elemento */}
-      <Whoosh at={S1_START} />
-      <Whoosh at={S2A_START} volume={0.7} />
-      <Whoosh at={S2B_START} volume={0.75} />
-      <Whoosh at={S2C_START} volume={0.7} />
-      <Whoosh at={S2C_START + 2 * S2_STEP} volume={0.45} />
-      <Whoosh at={S2C_START + 7 * S2_STEP} volume={0.45} />
-      <Whoosh at={FINAL_START} volume={0.9} />
-      <Whoosh at={FINAL_TIME} volume={0.6} />
     </AbsoluteFill>
   );
 };

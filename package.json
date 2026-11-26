@@ -7,7 +7,7 @@
     "dev": "remotion studio",
     "sfx": "python3 scripts/make-whoosh.py",
     "render": "remotion render CartelaTeste out/cartela-teste.mp4",
-    "render:quarta-conviccao": "remotion render QuartaConviccao out/quarta-conviccao.mp4"
+    "render:quarta-conviccao": "remotion render QuartaConviccao out/quarta-conviccao.mp4 --muted"
   },
   "dependencies": {
     "@remotion/cli": "4.0.547",
