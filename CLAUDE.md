@@ -17,6 +17,9 @@ src/
   CartelaTeste.tsx   # 1º projeto (cartela de teste), com Title/Icons/BarChart/timing na raiz de src/
   Whoosh.tsx         # componente de som reutilizável: <Whoosh at={frame} />
 public/whoosh.wav    # gerado por scripts/make-whoosh.py (sintetizado, sem samples de terceiros)
+src/generosidade/    # 2º projeto: vinheta de dízimos e ofertas (QR Code + celular)
+  assets.ts          # gerado por scripts/generosidade-assets.py (glifos do título, anéis do G, matriz do QR)
+public/generosidade/ # logo do usuário + trilha/efeitos sintetizados (scripts/generosidade-audio.py)
 ```
 
 **Projetos novos:** crie uma pasta `src/<nome-do-projeto>/` com o componente principal e um

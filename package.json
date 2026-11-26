@@ -6,10 +6,16 @@
   "scripts": {
     "dev": "remotion studio",
     "sfx": "python3 scripts/make-whoosh.py",
-    "render": "remotion render CartelaTeste out/cartela-teste.mp4"
+    "render": "remotion render CartelaTeste out/cartela-teste.mp4",
+    "render:generosidade": "remotion render Generosidade out/generosidade.mp4",
+    "assets:generosidade": "python3 scripts/generosidade-assets.py",
+    "sfx:generosidade": "python3 scripts/generosidade-audio.py"
   },
   "dependencies": {
+    "@fontsource/manrope": "5.3.0",
+    "@fontsource/playfair-display": "5.3.0",
     "@remotion/cli": "4.0.547",
+    "@remotion/paths": "4.0.547",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "remotion": "4.0.547"
