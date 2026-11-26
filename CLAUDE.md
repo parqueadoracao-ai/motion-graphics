@@ -16,12 +16,16 @@ src/
   Root.tsx           # registra cada <Composition>
   CartelaTeste.tsx   # 1º projeto (cartela de teste), com Title/Icons/BarChart/timing na raiz de src/
   Whoosh.tsx         # componente de som reutilizável: <Whoosh at={frame} />
+  quarta-conviccao/  # cartela "Quarta da Convicção" (culto de quarta), tipografia cinética
 public/whoosh.wav    # gerado por scripts/make-whoosh.py (sintetizado, sem samples de terceiros)
 ```
 
 **Projetos novos:** crie uma pasta `src/<nome-do-projeto>/` com o componente principal e um
 `timing.ts` próprio, e registre a composição em `src/Root.tsx`. Reaproveite `src/Whoosh.tsx`.
 Adicione um script `render:<nome>` no `package.json` gerando `out/<nome>.mp4`.
+
+Fontes ficam em `public/fonts/` (woff2, licença OFL) e são carregadas com `FontFace` + `delayRender`:
+o Chrome do render na nuvem não consegue baixar do Google Fonts (erro de certificado no proxy).
 
 ## Padrões
 
