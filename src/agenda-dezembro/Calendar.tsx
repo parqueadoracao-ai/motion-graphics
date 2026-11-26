@@ -172,8 +172,31 @@ const EventCard: React.FC<{ i: number }> = ({ i }) => {
   const bh = interpolate(fly, [0, 1], [CELL_H, ROW_H]);
   const arc = Math.sin(fly * Math.PI) * -40; // leve arco no voo
   const wd = WEEKDAYS_LONG[weekdayOf(e.day)];
+  // linha fina que liga o dia no calendário ao cartão: desenha e depois se recolhe
+  const lineIn = interpolate(frame, [t0, t0 + 10], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const lineOut = interpolate(frame, [t0 + 16, t0 + 30], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
+  const x1 = cx0 + CELL_W / 2;
+  const y1 = cy0 + CELL_H / 2;
+  const x2 = LIST_X;
+  const y2 = rowY(i) + ROW_H / 2;
   return (
     <>
+      {lineOut < 1 && (
+        <svg width={1920} height={1080} style={{ position: "absolute", left: 0, top: 0 }}>
+          <path
+            d={`M ${x1} ${y1} C ${x1 + 120} ${y1 - 60}, ${x2 - 140} ${y2}, ${x2} ${y2}`}
+            fill="none"
+            stroke={e.to}
+            strokeWidth={1.4}
+            strokeLinecap="round"
+            pathLength={1}
+            strokeDasharray={`${lineIn - lineOut} 2`}
+            strokeDashoffset={-lineOut}
+            opacity={0.8}
+          />
+          <circle cx={x1} cy={y1} r={4 + 10 * lineIn} fill="none" stroke={e.to} strokeWidth={1.2} opacity={1 - lineIn * 0.9} />
+        </svg>
+      )}
       {/* corpo do cartão abrindo a partir do bloco */}
       <div
         style={{

@@ -22,10 +22,12 @@ export const IRIDESCENT = `linear-gradient(155deg, ${C.violet} 0%, ${C.blue} 34%
 // Fontes (SIL Open Font License) servidas de public/fonts
 export const DISPLAY = "Outfit"; // geométrica, próxima da referência "stella"
 export const SANS = "Inter Tight"; // apoio, estilo das legendas da referência
+export const HEADLINE = "Bricolage Grotesque"; // título com cara de cartaz
 
 const faces = [
   new FontFace(DISPLAY, `url(${staticFile("fonts/Outfit-latin.woff2")}) format("woff2")`, { weight: "100 900" }),
   new FontFace(SANS, `url(${staticFile("fonts/InterTight-latin.woff2")}) format("woff2")`, { weight: "100 900" }),
+  new FontFace(HEADLINE, `url(${staticFile("fonts/BricolageGrotesque-latin.woff2")}) format("woff2")`, { weight: "200 800" }),
 ];
 const handle = delayRender("Carregando fontes");
 Promise.all(faces.map((f) => f.load()))

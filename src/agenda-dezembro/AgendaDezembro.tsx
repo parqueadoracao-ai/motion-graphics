@@ -1,17 +1,11 @@
-import { AbsoluteFill, Easing, Html5Audio, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { Whoosh } from "../Whoosh";
+import { AbsoluteFill, Easing, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Calendar } from "./Calendar";
 import { DarkIntro } from "./DarkIntro";
-import { BTN_CX, BTN_CY, C, DISPLAY, EVENTOS, IRIDESCENT, SANS } from "./theme";
+import { Lines } from "./Lines";
+import { BTN_CX, BTN_CY, C, HEADLINE, IRIDESCENT, SANS } from "./theme";
 import {
-  EVENT_START,
-  EVENT_STEP,
-  HAND_IN,
   LOGO_START,
-  ORGANIZE,
   PLACE_START,
-  PRESS,
-  SLABS_IN,
   TITLE_IN,
   TITLE_LETTER_STEP,
   TITLE_UP,
@@ -69,16 +63,16 @@ const Title: React.FC = () => {
         display: "flex",
         justifyContent: "center",
         transform: `translateY(-50%) scale(${scale})`,
-        fontFamily: DISPLAY,
-        fontWeight: 600,
-        fontSize: 190,
+        fontFamily: HEADLINE,
+        fontWeight: 800,
+        fontSize: 196,
         lineHeight: 1.1,
-        letterSpacing: "-0.035em",
+        letterSpacing: "-0.045em",
         whiteSpace: "nowrap",
       }}
     >
       {TITLE_WORDS.map((w, wi) => (
-        <span key={w} style={{ display: "inline-block", marginRight: wi === 0 ? "0.24em" : 0 }}>
+        <span key={w} style={{ display: "inline-block", marginRight: wi === 0 ? "0.22em" : 0 }}>
           {w.split("").map((ch, ci) => {
             const local = frame - (TITLE_IN + n++ * TITLE_LETTER_STEP);
             const p = interpolate(local, [0, 14], [0, 1], { ...clamp, easing: Easing.bezier(0.2, 0.7, 0.2, 1) });
@@ -209,25 +203,12 @@ export const AgendaDezembro: React.FC = () => {
       {frame < TRANS_END && <DarkIntro />}
       <LightReveal>
         <LightBackground />
+        <Lines />
         <Calendar />
         <Title />
         <Footer />
       </LightReveal>
 
-      {/* Som */}
-      <Whoosh at={HAND_IN + 8} volume={0.35} />
-      <Sequence from={PRESS - 1} durationInFrames={10} layout="none">
-        <Html5Audio src={staticFile("agenda-dezembro/click.wav")} volume={0.9} />
-      </Sequence>
-      <Whoosh at={TRANS_START + 6} volume={0.85} />
-      <Whoosh at={TITLE_IN + 4} volume={0.5} />
-      <Whoosh at={TITLE_UP + 2} volume={0.4} />
-      <Whoosh at={SLABS_IN + 6} volume={0.7} />
-      <Whoosh at={ORGANIZE + 8} volume={0.6} />
-      {EVENTOS.map((_, i) => (
-        <Whoosh key={i} at={EVENT_START + i * EVENT_STEP + 6} volume={0.6} />
-      ))}
-      <Whoosh at={LOGO_START + 4} volume={0.7} />
     </AbsoluteFill>
   );
 };
