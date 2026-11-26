@@ -13,9 +13,9 @@ export const PRESS = 54; // clique (botão liga)
 export const HAND_OUT = 64; // mão recua
 export const HAND_GONE = 88;
 
-// Transição: a luz do botão se expande e vira o ambiente claro
-export const TRANS_START = 74;
-export const TRANS_END = 98;
+// Transição: fade suave para o ambiente claro, com anéis de luz saindo do botão
+export const TRANS_START = 64;
+export const TRANS_END = 104;
 
 // Título
 export const TITLE_IN = 92;

@@ -175,23 +175,66 @@ const Footer: React.FC = () => {
   );
 };
 
-// Transição: a luz do botão abre um círculo que revela o ambiente claro
+// Transição suave: o ambiente claro surge em fade enquanto anéis finos de luz
+// (com leve flare) saem do botão e atravessam a tela
+const RINGS = [
+  { delay: 0, color: C.neon, glow: "rgba(168,107,255,0.55)", width: 2 },
+  { delay: 7, color: "#7FA8FF", glow: "rgba(63,123,255,0.45)", width: 1.5 },
+  { delay: 14, color: "#5FD6C6", glow: "rgba(20,184,166,0.4)", width: 1.2 },
+];
+const RING_DUR = 36;
+const RING_MAX = 1250;
+
 const LightReveal: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const frame = useCurrentFrame();
-  const r = interpolate(frame, [TRANS_START, TRANS_END], [0, 2300], { ...clamp, easing: Easing.bezier(0.55, 0, 0.35, 1) });
-  const flash = interpolate(frame, [TRANS_START, TRANS_START + 8, TRANS_END + 6], [0, 0.9, 0], clamp);
   if (frame < TRANS_START) return null;
+  const fade = interpolate(frame, [TRANS_START + 10, TRANS_END - 6], [0, 1], { ...clamp, easing: Easing.inOut(Easing.sin) });
+  // brilho lilás que cresce do botão: a passagem fica luminosa (não acinzentada)
+  const bloomT = interpolate(frame, [TRANS_START, TRANS_END - 6], [0, 1], { ...clamp, easing: Easing.out(Easing.quad) });
+  const bloomR = 20 + 110 * bloomT;
+  const flare = interpolate(frame, [TRANS_START, TRANS_START + 10, TRANS_END + 4], [0, 1, 0], { ...clamp, easing: Easing.out(Easing.quad) });
   return (
     <>
-      <AbsoluteFill style={{ clipPath: frame >= TRANS_END ? undefined : `circle(${r}px at ${BTN_CX}px ${BTN_CY}px)` }}>{children}</AbsoluteFill>
-      {frame < TRANS_END + 8 && (
+      {bloomT < 1 && (
         <AbsoluteFill
           style={{
-            background: `radial-gradient(circle at ${BTN_CX}px ${BTN_CY}px, rgba(255,255,255,${flash}) 0%, rgba(214,180,255,${flash * 0.6}) ${Math.max(1, r / 30)}%, rgba(255,255,255,0) ${Math.max(2, r / 14)}%)`,
             pointerEvents: "none",
+            background: `radial-gradient(${bloomR}% ${bloomR}% at ${(BTN_CX / 1920) * 100}% ${(BTN_CY / 1080) * 100}%, rgba(246,242,255,${bloomT}) 0%, rgba(214,196,255,${0.9 * bloomT}) 35%, rgba(150,120,230,${0.5 * bloomT}) 65%, rgba(40,30,80,0) 100%)`,
           }}
         />
       )}
+      <AbsoluteFill style={{ opacity: fade }}>{children}</AbsoluteFill>
+      {/* flare suave no ponto do botão */}
+      {flare > 0 && (
+        <AbsoluteFill
+          style={{
+            pointerEvents: "none",
+            opacity: flare * 0.6,
+            background: `radial-gradient(38% 34% at ${(BTN_CX / 1920) * 100}% ${(BTN_CY / 1080) * 100}%, rgba(255,255,255,0.9) 0%, rgba(214,180,255,0.45) 30%, rgba(63,123,255,0.12) 55%, rgba(255,255,255,0) 80%)`,
+          }}
+        />
+      )}
+      {RINGS.map((rg, i) => {
+        const w = interpolate(frame, [TRANS_START + rg.delay, TRANS_START + rg.delay + RING_DUR], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+        if (w <= 0 || w >= 1) return null;
+        const r = 40 + RING_MAX * w;
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: BTN_CX - r,
+              top: BTN_CY - r,
+              width: r * 2,
+              height: r * 2,
+              borderRadius: "50%",
+              border: `${rg.width}px solid ${rg.color}`,
+              boxShadow: `0 0 26px ${rg.glow}, inset 0 0 26px ${rg.glow}`,
+              opacity: Math.sin(w * Math.PI) * 0.8,
+            }}
+          />
+        );
+      })}
     </>
   );
 };
