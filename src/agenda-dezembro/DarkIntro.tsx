@@ -1,5 +1,5 @@
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { FemaleHand } from "./Hand";
+import { LineHand, TIP } from "./Hand";
 import { BTN_CX, BTN_CY, BTN_SIZE, C } from "./theme";
 import { BTN_SPIN, BTN_SPIN_DUR, HAND_ARRIVE, HAND_GONE, HAND_IN, HAND_OUT, PRESS, TRANS_START } from "./timing";
 
@@ -11,8 +11,8 @@ export const useLight = () => {
   return interpolate(frame, [PRESS, PRESS + 10], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
 };
 
-// Botão de vidro com ícone de play
-const PlayButton: React.FC = () => {
+// Botão redondo de power (anel duplo) com raios que acendem
+const PowerButton: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const on = useLight();
@@ -54,7 +54,7 @@ const PlayButton: React.FC = () => {
         style={{
           position: "absolute",
           inset: 0,
-          borderRadius: 58,
+          borderRadius: "50%",
           background: `linear-gradient(160deg, rgba(${40 + 110 * L},${36 + 40 * L},${60 + 160 * L},0.9), rgba(${18 + 60 * L},${16 + 10 * L},${30 + 90 * L},0.95))`,
           border: `${3 + 3 * L}px solid rgba(${120 + 115 * L},${110 + 90 * L},${150 + 105 * L},${0.25 + 0.75 * L})`,
           boxShadow: [
@@ -65,7 +65,7 @@ const PlayButton: React.FC = () => {
           ].join(", "),
         }}
       />
-      {/* ícone play */}
+      {/* anel externo, ícone de power e raios */}
       <svg viewBox="0 0 100 100" style={{ position: "absolute", inset: 0, overflow: "visible" }}>
         <defs>
           <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -77,21 +77,27 @@ const PlayButton: React.FC = () => {
             </feMerge>
           </filter>
         </defs>
-        <path
-          d="M40 31 L69 50 L40 69 Z"
-          fill={`rgba(255,255,255,${0.05 + 0.25 * L})`}
-          stroke={L > 0.02 ? "#FFFFFF" : "#4A4460"}
-          strokeOpacity={0.6 + 0.4 * L}
-          strokeWidth={4.5}
-          strokeLinejoin="round"
-          filter="url(#neonGlow)"
-        />
+        <circle cx="50" cy="50" r="58" fill="none" stroke={`rgba(${150 + 90 * L},${140 + 70 * L},${190 + 65 * L},${0.3 + 0.6 * L})`} strokeWidth={1.6} filter="url(#neonGlow)" />
+        <g fill="none" stroke={L > 0.02 ? "#FFFFFF" : "#4A4460"} strokeOpacity={0.6 + 0.4 * L} strokeWidth={5} strokeLinecap="round" filter="url(#neonGlow)">
+          <path d="M37.3 35.5 A20 20 0 1 0 62.7 35.5" />
+          <line x1="50" y1="27" x2="50" y2="49" />
+        </g>
+        {/* raios: aparecem ao ligar */}
+        <g stroke="#E9D8FF" strokeWidth={3.2} strokeLinecap="round" filter="url(#neonGlow)" opacity={L}>
+          {[-40, 0, 40].map((a) => {
+            const r0 = 68 + 4 * (1 - on);
+            const r1 = 68 + 14 * on;
+            const rad = (a * Math.PI) / 180;
+            return <line key={a} x1={50 + Math.sin(rad) * r0} y1={50 - Math.cos(rad) * r0} x2={50 + Math.sin(rad) * r1} y2={50 - Math.cos(rad) * r1} />;
+          })}
+        </g>
       </svg>
     </div>
   );
 };
 
-const HAND_W = 340;
+const HAND_SCALE = 0.62;
+const DIR = { x: 0.56, y: 0.83 }; // direção do braço (da ponta do dedo para o pulso)
 
 export const DarkIntro: React.FC = () => {
   const frame = useCurrentFrame();
@@ -101,9 +107,10 @@ export const DarkIntro: React.FC = () => {
   const inP = spring({ frame: frame - HAND_IN, fps, config: { damping: 20, mass: 1.1 }, durationInFrames: HAND_ARRIVE - HAND_IN });
   const press = interpolate(frame, [PRESS - 4, PRESS, PRESS + 6], [0, 14, 6], clamp);
   const outP = interpolate(frame, [HAND_OUT, HAND_GONE], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
-  const tipY = interpolate(inP, [0, 1], [1180, BTN_CY + 8]) + press + outP * 760;
-  const tipX = BTN_CX + 6 + (1 - inP) * 120 + outP * 60;
-  const tilt = (1 - inP) * 10 + outP * 6;
+  // a mão desliza na diagonal (ao longo do braço), de baixo/direita até o botão
+  const along = (1 - inP) * 900 - press + outP * 900;
+  const tipX = BTN_CX + 14 + DIR.x * along;
+  const tipY = BTN_CY + 18 + DIR.y * along;
   const ambient = interpolate(frame, [0, 20], [0, 1], clamp);
   return (
     <AbsoluteFill style={{ background: C.night }}>
@@ -113,20 +120,13 @@ export const DarkIntro: React.FC = () => {
           background: `radial-gradient(ellipse 55% 60% at 50% 44%, rgba(70,50,120,${0.28 * ambient + 0.35 * light}) 0%, rgba(20,14,40,${0.3 * ambient}) 45%, rgba(0,0,0,0) 75%)`,
         }}
       />
-      <PlayButton />
+      <PowerButton />
       {frame >= HAND_IN && frame < HAND_GONE && (
-        <div
-          style={{
-            position: "absolute",
-            left: tipX - 260 * (HAND_W / 420),
-            top: tipY,
-            transformOrigin: "50% 0%",
-            transform: `rotate(${-tilt}deg)`,
-            filter: `brightness(${0.5 + 0.45 * light + 0.15 * inP})`,
-          }}
-        >
-          <FemaleHand light={light} width={HAND_W} />
-        </div>
+        <svg width={1920} height={1080} style={{ position: "absolute", overflow: "visible" }}>
+          <g transform={`translate(${tipX} ${tipY}) scale(${HAND_SCALE}) translate(${-TIP.x} ${-TIP.y})`}>
+            <LineHand light={light} draw={interpolate(frame, [HAND_IN, HAND_ARRIVE + 2], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) })} />
+          </g>
+        </svg>
       )}
       {/* vinheta */}
       <AbsoluteFill style={{ background: "radial-gradient(ellipse 80% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.7) 100%)" }} />
