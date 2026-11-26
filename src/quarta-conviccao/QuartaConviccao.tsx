@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { Background } from "./Background";
 import { SANS, SERIF } from "./fonts";
 import { BibleIcon, ClockIcon, PrayerIcon } from "./Icons";
@@ -11,6 +11,8 @@ import {
   FINAL_START,
   FINAL_TIME,
   LETTER_STEP,
+  LOGO_START,
+  PLACE_START,
   LINK_LEAD,
   OUT_STEP,
   S1_OUT,
@@ -189,21 +191,46 @@ const GRAD_FROM = TITLE.indexOf("Convicção");
 const Scene3: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const zoom = spring({ frame: frame - FINAL_START, fps, config: { damping: 30, stiffness: 50 } });
+  const zoom = spring({ frame: frame - FINAL_START, fps, config: { damping: 14, stiffness: 160, mass: 0.8 } });
   const settle = interpolate(frame, [FINAL_START, DURATION - 1], [0, 1], clamp);
   const line = interpolate(frame, [FINAL_LINE, FINAL_LINE + 26], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
   const t = spring({ frame: frame - FINAL_TIME, fps, config: { damping: 15, stiffness: 120 } });
-  const glow = interpolate(frame, [FINAL_START + 40, FINAL_START + 80], [0, 1], clamp) * (0.75 + 0.25 * Math.sin(frame / 20));
+  const glow = interpolate(frame, [FINAL_START + 18, FINAL_START + 50], [0, 1], clamp) * (0.75 + 0.25 * Math.sin(frame / 20));
+
+  // onda de luz circular no impacto do título
+  const wave = interpolate(frame, [FINAL_START + 4, FINAL_START + 34], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const flash = interpolate(frame, [FINAL_START, FINAL_START + 5, FINAL_START + 24], [0, 1, 0], clamp);
 
   let gi = 0;
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+      <AbsoluteFill
+        style={{
+          opacity: flash * 0.55,
+          background: "radial-gradient(45% 40% at 50% 46%, rgba(255,194,75,0.55) 0%, rgba(255,92,122,0.25) 40%, rgba(0,0,0,0) 75%)",
+        }}
+      />
+      {wave > 0 && wave < 1 && (
+        <div
+          style={{
+            position: "absolute",
+            left: 960 - 1100 * wave,
+            top: 500 - 1100 * wave,
+            width: 2200 * wave,
+            height: 2200 * wave,
+            borderRadius: "50%",
+            border: `2px solid ${C.amber}`,
+            boxShadow: `0 0 30px ${C.pink}, inset 0 0 30px ${C.pink}`,
+            opacity: (1 - wave) * 0.6,
+          }}
+        />
+      )}
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          transform: `scale(${1.25 - zoom * 0.25 + settle * 0.03})`,
+          transform: `translateY(-80px) scale(${1.45 - zoom * 0.45 + settle * 0.03})`,
         }}
       >
         <div
@@ -225,6 +252,7 @@ const Scene3: React.FC = () => {
               <KWord
                 key={i}
                 enter={FINAL_START + i * LETTER_STEP}
+                snappy
                 style={{ whiteSpace: "pre" }}
                 innerStyle={{ color, fontStyle: isGrad ? "italic" : "normal" }}
               >
@@ -274,14 +302,84 @@ const Scene3: React.FC = () => {
   );
 };
 
+// ---------- Assinatura: logo da igreja + local (mesma arte e letreiro do Generosidade) ----------
+const LOGO_W = 560;
+const LOGO_H = (LOGO_W * 320) / 2000;
+const LOGO_Y = 790;
+const PLACE = "PARQUE DOS COQUEIROS";
+
+const Footer: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const lp = interpolate(frame, [LOGO_START, LOGO_START + 26], [0, 1], { ...clamp, easing: Easing.bezier(0.3, 0, 0.1, 1) });
+  const ls = spring({ frame: frame - LOGO_START, fps, config: { damping: 200 } });
+  const deco = interpolate(frame, [PLACE_START + 6, PLACE_START + 30], [0, 1], { ...clamp, easing: Easing.out(Easing.cubic) });
+  const logo = staticFile("quarta-conviccao/logo.png");
+  return (
+    <>
+      {lp > 0 && (
+        <Img
+          src={logo}
+          style={{
+            position: "absolute",
+            left: 960 - LOGO_W / 2,
+            top: LOGO_Y,
+            width: LOGO_W,
+            height: LOGO_H,
+            clipPath: `inset(-20% ${50 - lp * 50}% -20% ${50 - lp * 50}%)`,
+            transform: `scale(${1.08 - 0.08 * ls}) translateY(${(1 - ls) * 10}px)`,
+            filter: `blur(${(1 - lp) * 8}px)`,
+            opacity: interpolate(frame, [LOGO_START, LOGO_START + 10], [0, 1], clamp) * 0.95,
+          }}
+        />
+      )}
+      <div
+        style={{
+          position: "absolute",
+          top: LOGO_Y + LOGO_H + 30,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 26,
+          fontFamily: SANS,
+        }}
+      >
+        <div style={{ width: 90 * deco, height: 1.5, background: `linear-gradient(90deg, rgba(255,194,75,0), ${C.amber})` }} />
+        <div style={{ fontSize: 26, fontWeight: 600, color: C.soft, letterSpacing: 10, whiteSpace: "pre" }}>
+          {PLACE.split("").map((ch, i) => {
+            const local = frame - (PLACE_START + i * 0.9);
+            return (
+              <span
+                key={i}
+                style={{
+                  display: "inline-block",
+                  opacity: interpolate(local, [0, 8], [0, 1], clamp),
+                  transform: `translateY(${(1 - interpolate(local, [0, 12], [0, 1], { ...clamp, easing: Easing.out(Easing.back(2)) })) * 14}px)`,
+                  marginRight: i === PLACE.length - 1 ? -10 : 0,
+                }}
+              >
+                {ch}
+              </span>
+            );
+          })}
+        </div>
+        <div style={{ width: 90 * deco, height: 1.5, background: `linear-gradient(90deg, ${C.violet}, rgba(155,107,255,0))` }} />
+      </div>
+    </>
+  );
+};
+
 export const QuartaConviccao: React.FC = () => {
   const frame = useCurrentFrame();
   return (
     <AbsoluteFill style={{ backgroundColor: "#0B0F17", fontFamily: SANS }}>
       <Background />
       {frame < S2A_START + 10 && <Scene1 />}
-      {frame >= S2A_START - 2 && frame < FINAL_START && <Scene2 />}
+      {frame >= S2A_START - 2 && frame < FINAL_START + 8 && <Scene2 />}
       {frame >= FINAL_START - 2 && <Scene3 />}
+      {frame >= LOGO_START && <Footer />}
 
     </AbsoluteFill>
   );

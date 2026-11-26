@@ -4,19 +4,24 @@ import { Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "re
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
 // Entrada/saída cinética: sobe com desfoque e leve giro em X; sai subindo e desfocando.
-export const useKinetic = (enter: number, exit?: number, exitLen = 16) => {
+export const useKinetic = (enter: number, exit?: number, exitLen = 16, snappy = false) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const p = spring({ frame: frame - enter, fps, config: { damping: 17, stiffness: 110, mass: 0.9 } });
+  const p = spring({
+    frame: frame - enter,
+    fps,
+    config: snappy ? { damping: 13, stiffness: 230, mass: 0.7 } : { damping: 17, stiffness: 110, mass: 0.9 },
+  });
+  const amp = snappy ? 1.7 : 1; // entrada enérgica: vem de mais longe, mais rápido
   const q =
     exit === undefined
       ? 0
       : interpolate(frame, [exit, exit + exitLen], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
-  const appear = interpolate(frame, [enter, enter + 10], [0, 1], clamp);
+  const appear = interpolate(frame, [enter, enter + (snappy ? 5 : 10)], [0, 1], clamp);
   return {
-    y: (1 - p) * 80 - q * 70,
+    y: (1 - p) * 80 * amp - q * 70,
     blur: Math.max(0, (1 - p) * 16) + q * 18,
-    rot: (1 - p) * 55 - q * 30,
+    rot: (1 - p) * 55 * amp - q * 30,
     opacity: appear * (1 - q),
     p,
     q,
@@ -28,9 +33,10 @@ export const KWord: React.FC<{
   exit?: number;
   style?: React.CSSProperties;
   innerStyle?: React.CSSProperties;
+  snappy?: boolean;
   children: React.ReactNode;
-}> = ({ enter, exit, style, innerStyle, children }) => {
-  const k = useKinetic(enter, exit);
+}> = ({ enter, exit, style, innerStyle, snappy, children }) => {
+  const k = useKinetic(enter, exit, 16, snappy);
   return (
     <span
       style={{
