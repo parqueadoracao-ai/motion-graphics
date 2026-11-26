@@ -9,7 +9,9 @@
     "render": "remotion render CartelaTeste out/cartela-teste.mp4",
     "render:generosidade": "remotion render Generosidade out/generosidade.mp4",
     "assets:generosidade": "python3 scripts/generosidade-assets.py",
-    "sfx:generosidade": "python3 scripts/generosidade-audio.py"
+    "sfx:generosidade": "python3 scripts/generosidade-audio.py",
+    "render:contorno": "remotion render ContornoDeLuz out/contorno-de-luz.mp4",
+    "contorno:glifos": "python3 scripts/contorno-de-luz.py"
   },
   "dependencies": {
     "@fontsource/manrope": "5.3.0",

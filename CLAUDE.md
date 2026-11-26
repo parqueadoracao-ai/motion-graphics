@@ -20,11 +20,42 @@ public/whoosh.wav    # gerado por scripts/make-whoosh.py (sintetizado, sem sampl
 src/generosidade/    # 2º projeto: vinheta de dízimos e ofertas (QR Code + celular)
   assets.ts          # gerado por scripts/generosidade-assets.py (glifos do título, anéis do G, matriz do QR)
 public/generosidade/ # logo do usuário + trilha/efeitos sintetizados (scripts/generosidade-audio.py)
+src/efeitos/         # efeitos reutilizáveis entre projetos
+  contorno-de-luz/   # "Contorno de Luz" (ver seção abaixo)
 ```
 
 **Projetos novos:** crie uma pasta `src/<nome-do-projeto>/` com o componente principal e um
 `timing.ts` próprio, e registre a composição em `src/Root.tsx`. Reaproveite `src/Whoosh.tsx`.
 Adicione um script `render:<nome>` no `package.json` gerando `out/<nome>.mp4`.
+
+## Efeitos reutilizáveis
+
+### Contorno de Luz (`src/efeitos/contorno-de-luz/`)
+
+Destaque de abertura criado no projeto Generosidade. A 1ª letra da palavra entra grande no centro,
+duas linhas de luz (dourada e azul) contornam o lado de fora da letra no formato dela, com cometa e
+faíscas; ao fechar há uma onda de luz e um reflexo. Depois a letra viaja até seu lugar e o resto da
+palavra surge. Com uma letra só, ela fica no centro com o contorno. **Sem som** (o projeto adiciona
+whoosh/brilho se quiser, usando os tempos de `timing.ts` do efeito).
+
+Quando o usuário pedir "Contorno de Luz com a palavra X" (ou "com a letra X"), use este componente:
+
+```tsx
+import { ContornoDeLuz } from "../efeitos/contorno-de-luz/ContornoDeLuz";
+<ContornoDeLuz palavra="AMOR" />                       // palavra centralizada na tela
+<ContornoDeLuz palavra="GENEROSIDADE" linhaBase={226} /> // palavra formada no topo
+<ContornoDeLuz palavra="A" inicio={30} cores={{ tinta: "#FFFFFF" }} />
+```
+
+Props: `palavra`, `inicio` (frame), `centroX`, `linhaBase`, `espacamento`, `centroLetra`, `cores`.
+`larguraPalavra()` dá a largura da palavra formada; `duracaoContorno()` (em `timing.ts`) a duração.
+Suporta A–Z, 0–9, acentuadas do português (Á, Ç, É, Õ…) e espaço; fonte Playfair Display 700.
+Glifos e anéis vêm de `glifos.ts`, gerado por `npm run contorno:glifos` (rode de novo se mudar a fonte).
+Vídeo avulso (fundo claro neutro, sem áudio):
+
+```bash
+npx remotion render ContornoDeLuz out/contorno-amor.mp4 --props='{"palavra":"AMOR"}' --browser-executable=/opt/pw-browsers/chromium_headless_shell
+```
 
 ## Padrões
 

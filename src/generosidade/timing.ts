@@ -1,17 +1,16 @@
+import * as CL from "../efeitos/contorno-de-luz/timing";
 // Linha do tempo do projeto Generosidade (frames, 30 fps) — 15 s
 export const FPS = 30;
 export const DURATION = 450;
 
-// Abertura: o "G"
-export const G_IN = 0; // G entra grande e vai ao centro
-export const RING_START = 14; // linhas externas começam a contornar o G
-export const RING_END = 56; // contorno 100% concluído (chime)
-export const G_MOVE = 64; // G viaja até seu lugar na palavra
-export const G_MOVE_DUR = 18;
+// Abertura: o "G" com o efeito Contorno de Luz (tempos vêm do efeito, começando no frame 0)
+export const G_IN = CL.ENTRADA;
+export const RING_START = CL.ANEIS_INICIO;
+export const RING_END = CL.ANEIS_FIM;
+export const G_MOVE = CL.VIAGEM;
 
 // Palavra completa + linha + subtítulo
-export const LETTERS_START = 76; // demais letras de GENEROSIDADE
-export const LETTER_STEP = 2;
+export const LETTERS_START = CL.LETRAS; // demais letras de GENEROSIDADE
 export const LINE_START = 84; // linha inferior cresce da esquerda p/ direita
 export const LINE_DUR = 30;
 export const SUBTITLE_START = 102; // DÍZIMOS E OFERTAS
@@ -31,5 +30,3 @@ export const LOGO_START = 252;
 export const PLACE_START = 270; // PARQUE DOS COQUEIROS
 export const HOLD_START = 300; // daqui até o fim: 5 s de tela "parada" com micro-movimentos
 
-// Brilho no G ao concluir o contorno
-export const SHINE_TIMES = [RING_END - 2]; // só no G grande; a palavra formada fica estática
