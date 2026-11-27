@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Previsão do Tempo RN · v1.1.4</title>
+<title>Previsão do Tempo RN · v1.1.5</title>
 <style>
 :root{
   --bg:#EEF3F8; --panel:#FFFFFF; --ink:#0E2240; --muted:#5B6B85; --line:#DCE4EE; --soft:#F5F8FC;
@@ -102,7 +102,7 @@ textarea{resize:vertical;line-height:1.5}
 </head>
 <body>
 <header class="top">
-  <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · Inter · 167 municípios · <b>v1.1.4</b></p></div></div>
+  <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · Inter · 167 municípios · <b>v1.1.5</b></p></div></div>
   <div class="top-actions">
     <button class="btn" id="btn-copy" type="button">Copiar textos do apresentador</button>
     <button class="btn pri" id="btn-export" type="button">Exportar MP4</button>
@@ -2079,7 +2079,7 @@ if (typeof module === "object" && typeof module.exports === "object") Object.ass
 const TEMA = {
   sea1:"#86B3E0", sea2:"#ADCDEC", neigh:"#EEF3F8", neighS:"#C7D7EA", land:"#FFFFFF", lines:"#B9CADF",
   border:"#7FA6D3", hl:"#D3E3FF", ink:"#0E2240", acc:"#1F5FD1", muted:"#5B6B85",
-  min:"#1F5FD1", minbg:"#D3E2FB", minNum:"#1747A6", max:"#EE5A2A", maxbg:"#FDDCCD", maxNum:"#C2410F", font:'"Inter"',
+  min:"#1F5FD1", minbg:"#7FA6E8", minNum:"#1F5FD1", max:"#EE5A2A", maxbg:"#F4A381", maxNum:"#E0501C", font:'"Inter"',
 };
 const FPS_OPCOES = [30, 60];
 // ---- tempos (segundos) ----
@@ -2367,8 +2367,8 @@ function drawMap(c, cam, alpha, marks) {
   c.save(); c.shadowColor = "rgba(14,34,64,.28)"; c.shadowBlur = 30; c.shadowOffsetY = 10; c.fillStyle = TEMA.land; c.fill(P_RN); c.restore();
   for (const mk of marks) if (mk.fill > 0) { c.save(); c.globalAlpha = alpha * mk.fill; c.fillStyle = TEMA.hl; c.fill(munPath(mk.m)); c.restore(); }
   const zoom = TL ? clamp((cam.s / TL.ov.s - 1) / 1.5) : 1;   // 0 = mapa inteiro, 1 = perto
-  c.save(); c.globalAlpha *= 0.45 + 0.55 * zoom;
-  c.strokeStyle = TEMA.lines; c.lineWidth = (0.8 + 0.7 * zoom) * px; c.lineJoin = "round"; c.stroke(P_ALL); c.restore();
+  c.save(); c.globalAlpha *= 0.8 + 0.2 * zoom;
+  c.strokeStyle = TEMA.lines; c.lineWidth = (1 + 0.5 * zoom) * px; c.lineJoin = "round"; c.stroke(P_ALL); c.restore();
   c.strokeStyle = TEMA.border; c.lineWidth = 2.2 * px; c.stroke(P_RN);
   for (const mk of marks) if (mk.line > 0 && mk.lineA > 0) {
     c.save(); c.globalAlpha = alpha * mk.lineA; c.strokeStyle = TEMA.acc; c.lineWidth = 4.5 * px; c.lineJoin = "round"; c.lineCap = "round";
@@ -2453,7 +2453,9 @@ function drawCard(c, L, city, a, dy, t) {
   const gap = 16, bw = (w - k.pad * 2 - gap) / 2, by = y + k.pad + k.icon + k.gap;
   [["MÍN", city.min, TEMA.minNum, TEMA.minbg], ["MÁX", city.max, TEMA.maxNum, TEMA.maxbg]].forEach(([lab, v, col, bg], i) => {
     const bx = x + k.pad + i * (bw + gap);
-    c.fillStyle = bg; c.beginPath(); c.roundRect(bx, by, bw, k.boxH, 24); c.fill();
+    const bw2 = k.lab * 0.16;   // espessura da borda (3 px no horizontal)
+    c.fillStyle = "#FFFFFF"; c.strokeStyle = bg; c.lineWidth = bw2;
+    c.beginPath(); c.roundRect(bx + bw2 / 2, by + bw2 / 2, bw - bw2, k.boxH - bw2, 24); c.fill(); c.stroke();
     c.fillStyle = col; c.font = font(800, k.lab); c.letterSpacing = k.lab * 0.16 + "px";
     c.fillText(lab, bx + 24, by + 18 + k.lab); c.letterSpacing = -k.num * 0.03 + "px";
     c.fillStyle = col; c.font = font(900, k.num); c.fillText((hasNum(v) ? Math.round(v) : "–") + "°", bx + 22, by + k.boxH - 20); c.letterSpacing = "0px";
