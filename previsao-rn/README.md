@@ -46,6 +46,9 @@ Os tempos ficam no topo do script em `app.html` (`T_INTRO`, `T_TRAVEL`, …).
 npm run build:previsao-rn
 ```
 
+Para mostrar uma segunda opção ao cliente (ex.: 1.1.5B), liste-a em `variantes.json`
+(`{"B": {"icones": "traco"}}`); o build gera os dois arquivos.
+
 O build junta `app.html` com a malha do IBGE (`dados/`), a fonte Inter e o mp4-muxer
 (ambos em `node_modules`) num único arquivo.
 

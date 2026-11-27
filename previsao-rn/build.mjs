@@ -126,8 +126,15 @@ inject("/*__MP4MUXER__*/", muxer);
 // versão: previsao-rn/VERSAO (ex.: 1.0.0). O arquivo gerado leva a versão no nome e no cabeçalho do app.
 const versao = readFileSync(join(here, "VERSAO"), "utf8").trim();
 if (!/^\d+\.\d+\.\d+$/.test(versao)) throw new Error("VERSAO inválida: " + versao);
-html = html.replaceAll("__VERSAO__", versao);
-const saida = `previsao-rn-v${versao}.html`;
-for (const f of readdirSync(here)) if (/^previsao-rn(-v[\d.]+)?\.html$/.test(f) && f !== saida) unlinkSync(join(here, f));
-writeFileSync(join(here, saida), html);
-console.log(`${saida}: ${(html.length / 1024).toFixed(0)} KB · ${municipios.length} municípios`);
+// variantes para o cliente comparar (ex.: 1.1.5B com outros ícones), em variantes.json:
+//   { "B": { "icones": "traco" } }   → gera também previsao-rn-v<VERSAO>B.html
+let variantes = {};
+try { variantes = JSON.parse(readFileSync(join(here, "variantes.json"), "utf8")); } catch (e) {}
+const builds = [["", { icones: "chapado" }], ...Object.entries(variantes)];
+const saidas = builds.map(([suf]) => `previsao-rn-v${versao}${suf}.html`);
+for (const f of readdirSync(here)) if (/^previsao-rn(-v[\d.]+[A-Z]?)?\.html$/.test(f) && !saidas.includes(f)) unlinkSync(join(here, f));
+builds.forEach(([suf, cfg], i) => {
+  const out = html.replaceAll("__VERSAO__", versao + suf).replaceAll("__ESTILO_ICONES__", cfg.icones || "chapado");
+  writeFileSync(join(here, saidas[i]), out);
+  console.log(`${saidas[i]}: ${(out.length / 1024).toFixed(0)} KB · ${municipios.length} municípios · ícones ${cfg.icones || "chapado"}`);
+});

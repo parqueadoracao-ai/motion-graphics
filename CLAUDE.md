@@ -31,6 +31,9 @@ Edite `previsao-rn/app.html` e rode `npm run build:previsao-rn` para gerar `prev
 **Versão:** toda alteração entregue sobe o número em `previsao-rn/VERSAO` (correção/ajuste → 1.0.1,
 recurso novo → 1.1.0, mudança grande → 2.0.0) e ganha uma entrada em `previsao-rn/HISTORICO.md`.
 O nome do arquivo e o cabeçalho do app mostram a versão; diga a versão ao enviar o arquivo.
+**Variantes para escolha:** `previsao-rn/variantes.json` (ex.: `{"B": {"icones": "traco"}}`) faz o build gerar
+também `previsao-rn-vX.Y.ZB.html`. Quando o cliente escolher, a opção vira a versão oficial seguinte e a entrada
+sai do `variantes.json`. Estilos de ícone disponíveis: `chapado` (padrão) e `traco`.
 Tema atual: Atlântico com fonte Inter e ícones "chapado geométrico". A fonte Sora fica reservada para o segundo projeto/tema.
 
 ## Padrões
