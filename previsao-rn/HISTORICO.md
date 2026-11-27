@@ -5,6 +5,15 @@ Numeração `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** (1.**1**.0): recurso novo (ex.: período "Próximos 4 dias", novo tema).
 - **MAIOR** (**2**.0.0): mudança grande que altera o jeito de usar.
 
+## 1.1.0 — 27/11/2026
+
+- Câmera mais suave: viagem entre cidades mais longa (2,6 s) com chegada que desacelera
+  lentamente; depois de chegar, a câmera continua se aproximando bem devagar até a próxima cidade.
+- Zoom out final também mais lento (2,8 s).
+- Pino, contorno, nome e caixa entram um pouco depois, quando a câmera já assentou.
+- Duração automática de cada cidade passa a ser 4 s de chegada + tempo de fala.
+- Nova opção de exportação em 60 fps (30 fps continua como padrão).
+
 ## 1.0.0 — 27/11/2026
 
 Primeira versão numerada.

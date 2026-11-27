@@ -1,7 +1,7 @@
 # Previsão do Tempo RN
 
 Editor de cartelas animadas de previsão do tempo para os 167 municípios do Rio Grande do Norte.
-Gera o vídeo MP4 (sem som) direto no navegador.
+Gera o vídeo MP4 (sem som, 30 ou 60 fps) direto no navegador.
 
 ## Como usar
 
@@ -11,7 +11,7 @@ Gera o vídeo MP4 (sem som) direto no navegador.
    (clique na setinha ou use o botão direito para escolher o ícone). **⟳ Buscar previsão** preenche
    tudo pelo Open-Meteo; os campos continuam editáveis.
 3. Confira o **texto do apresentador** (Curto ou Completo, **↻ Outra versão** troca a frase). O app
-   estima o tempo de fala e usa como duração da cidade: 3 s de chegada da câmera + fala. A duração
+   estima o tempo de fala e usa como duração da cidade: 4 s de chegada da câmera + fala. A duração
    pode ser ajustada à mão.
 4. Escolha **Horizontal 16:9** ou **Vertical 9:16**, confira na prévia e clique em **Exportar MP4**.
 
@@ -30,10 +30,10 @@ clique em **Aplicar**.
 | Trecho | Duração |
 |---|---|
 | Abertura (mapa + título) | 1,5 s |
-| Cada município | 3 s + tempo de fala (mínimo 5 s) |
-| Câmera: viagem até a cidade | 1,6 s (dentro do tempo da cidade) |
-| Pino, contorno, nome, caixa | entram entre 1,45 s e 3,6 s |
-| Final: zoom out + resumo das 4 cidades | 5,5 s (3 s sem o resumo) |
+| Cada município | 4 s + tempo de fala (mínimo 5 s) |
+| Câmera: viagem até a cidade | 2,6 s, chegada desacelerando; depois aproximação lenta de 3,5% |
+| Pino, contorno, nome, caixa | entram entre 2,2 s e 4,25 s |
+| Final: zoom out (2,8 s) + resumo das 4 cidades | 5,5 s (3 s sem o resumo) |
 
 Os tempos ficam no topo do script em `app.html` (`T_INTRO`, `T_TRAVEL`, …).
 
