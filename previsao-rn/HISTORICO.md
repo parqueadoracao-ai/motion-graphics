@@ -5,6 +5,12 @@ Numeração `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** (1.**1**.0): recurso novo (ex.: período "Próximos 4 dias", novo tema).
 - **MAIOR** (**2**.0.0): mudança grande que altera o jeito de usar.
 
+## 1.1.1 — 27/11/2026
+
+- Ícones no estilo "chapado geométrico": formas sólidas em 2 tons, sem contorno, mais legíveis de longe
+  (sol com halo pulsando, nuvens flutuando, gotas caindo, raio piscando).
+- Fonte trocada para Roboto (cartela e editor).
+
 ## 1.1.0 — 27/11/2026
 
 - Câmera mais suave: viagem entre cidades mais longa (2,6 s) com chegada que desacelera

@@ -31,7 +31,7 @@ Edite `previsao-rn/app.html` e rode `npm run build:previsao-rn` para gerar `prev
 **Versão:** toda alteração entregue sobe o número em `previsao-rn/VERSAO` (correção/ajuste → 1.0.1,
 recurso novo → 1.1.0, mudança grande → 2.0.0) e ganha uma entrada em `previsao-rn/HISTORICO.md`.
 O nome do arquivo e o cabeçalho do app mostram a versão; diga a versão ao enviar o arquivo.
-Tema atual: Atlântico (Plus Jakarta Sans). A fonte Sora fica reservada para o segundo projeto/tema.
+Tema atual: Atlântico com fonte Roboto e ícones "chapado geométrico". A fonte Sora fica reservada para o segundo projeto/tema.
 
 ## Padrões
 

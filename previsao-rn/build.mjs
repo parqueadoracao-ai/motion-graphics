@@ -1,7 +1,7 @@
 // Monta previsao-rn/previsao-rn-v<VERSAO>.html (arquivo único, funciona offline) a partir de:
 //   app.html                    — editor + animação + exportação
 //   dados/*.geojson, *.json     — malhas e nomes oficiais do IBGE (baixados uma vez, ver README)
-//   node_modules                — fonte Plus Jakarta Sans e mp4-muxer
+//   node_modules                — fonte Roboto e mp4-muxer
 // Uso: npm run build:previsao-rn
 import { readFileSync, writeFileSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -111,8 +111,8 @@ const vizinhos = [23, 25, 26, 27, 28, 29].map(uf).join("");
 const mapa = { bounds, rn: uf(24), vizinhos, municipios };
 
 // ---------- fontes e bibliotecas ----------
-const fontDir = join(root, "node_modules/@fontsource/plus-jakarta-sans/files");
-const fontes = Object.fromEntries([500, 700, 800].map((w) => [w, read(join(fontDir, `plus-jakarta-sans-latin-${w}-normal.woff2`)).toString("base64")]));
+const fontDir = join(root, "node_modules/@fontsource/roboto/files");
+const fontes = { familia: "Roboto", pesos: Object.fromEntries([400, 500, 700, 900].map((w) => [w, read(join(fontDir, `roboto-latin-${w}-normal.woff2`)).toString("base64")])) };
 const muxer = readFileSync(join(root, "node_modules/mp4-muxer/build/mp4-muxer.js"), "utf8");
 
 let html = readFileSync(join(here, "app.html"), "utf8");

@@ -46,7 +46,7 @@ Os tempos ficam no topo do script em `app.html` (`T_INTRO`, `T_TRAVEL`, …).
 npm run build:previsao-rn
 ```
 
-O build junta `app.html` com a malha do IBGE (`dados/`), a fonte Plus Jakarta Sans e o mp4-muxer
+O build junta `app.html` com a malha do IBGE (`dados/`), a fonte Roboto e o mp4-muxer
 (ambos em `node_modules`) num único arquivo.
 
 ### Fontes de dados

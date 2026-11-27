@@ -8,7 +8,7 @@
 :root{
   --bg:#EEF3F8; --panel:#FFFFFF; --ink:#0E2240; --muted:#5B6B85; --line:#DCE4EE; --soft:#F5F8FC;
   --acc:#1F5FD1; --acc-soft:#E6EFFD; --max:#EE5A2A; --err:#C62828; --ok:#16794A;
-  --font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --font:"Roboto",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:500 14px/1.45 var(--font)}
@@ -102,7 +102,7 @@ textarea{resize:vertical;line-height:1.5}
 </head>
 <body>
 <header class="top">
-  <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · 167 municípios · <b>v__VERSAO__</b></p></div></div>
+  <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · Roboto · 167 municípios · <b>v__VERSAO__</b></p></div></div>
   <div class="top-actions">
     <button class="btn" id="btn-copy" type="button">Copiar textos do apresentador</button>
     <button class="btn pri" id="btn-export" type="button">Exportar MP4</button>
@@ -175,7 +175,7 @@ textarea{resize:vertical;line-height:1.5}
 const TEMA = {
   sea1:"#86B3E0", sea2:"#ADCDEC", neigh:"#EEF3F8", neighS:"#C7D7EA", land:"#FFFFFF", lines:"#DCE6F1",
   border:"#7FA6D3", hl:"#D3E3FF", ink:"#0E2240", acc:"#1F5FD1", muted:"#5B6B85",
-  min:"#1F5FD1", minbg:"#E6EFFD", max:"#EE5A2A", maxbg:"#FFEEE6", font:'"Plus Jakarta Sans"',
+  min:"#1F5FD1", minbg:"#E6EFFD", max:"#EE5A2A", maxbg:"#FFEEE6", font:'"Roboto"',
 };
 const FPS_OPCOES = [30, 60];
 // ---- tempos (segundos) ----
@@ -247,52 +247,50 @@ const munPath = (m) => { if (!pathCache.has(m.id)) pathCache.set(m.id, new Path2
 // =====================================================================
 // Ícones (desenhados em canvas, espaço 64×64, animados pelo tempo t)
 // =====================================================================
-const IC = { sun:"#FFBE2E", ray:"#FFA81A", light:"#E2E9F2", lightS:"#C6D2E1", mid:"#AEBBCD", midS:"#94A3B8", dark:"#6F7F97", darkS:"#5B6A82", rain:"#2F86F6", bolt:"#FFC21A" };
+// Estilo "chapado geométrico": formas sólidas em 2 tons, sem contorno.
+const IC = { halo:"#FFE29A", sun:"#FFB300", light:"#D4E0F2", mid:"#8FA6CC", rainCloud:"#5E7DB3", dark:"#3F5A8C", drop:"#1F5FD1", bolt:"#FFB300", fog:"#A9BBD6" };
 const CLOUD = new Path2D("M10 39 a9 9 0 0 1 -1.5 -17.9 a12.5 12.5 0 0 1 24.3 -3.6 a8.6 8.6 0 0 1 1.5 21.5 Z");
+const DROP = new Path2D("M0 0c0 0-4 5-4 8a4 4 0 0 0 8 0c0-3-4-8-4-8z");
 const TAU = Math.PI * 2;
-function sun(c, cx, cy, r, t) {
-  c.save(); c.translate(cx, cy); c.rotate((t / 14) * TAU);
-  c.strokeStyle = IC.ray; c.lineWidth = 3.4; c.lineCap = "round"; c.beginPath();
-  for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, x = Math.cos(a), y = Math.sin(a); c.moveTo(x * (r + 4), y * (r + 4)); c.lineTo(x * (r + 9), y * (r + 9)); }
-  c.stroke(); c.restore();
-  c.beginPath(); c.arc(cx, cy, r * (1 + 0.03 * Math.sin((t / 3) * TAU)), 0, TAU); c.fillStyle = IC.sun; c.fill();
+function sun(c, cx, cy, halo, core, t) {
+  const p = 1 + 0.06 * Math.sin((t / 3) * TAU);           // halo "respirando"
+  c.beginPath(); c.arc(cx, cy, halo * p, 0, TAU); c.fillStyle = IC.halo; c.fill();
+  c.beginPath(); c.arc(cx, cy, core, 0, TAU); c.fillStyle = IC.sun; c.fill();
 }
-function cloud(c, x, y, s, fill, stroke, t, slow) {
+function cloud(c, x, y, s, fill, t, slow) {
   const drift = slow ? 2.5 * Math.sin((t / 11) * TAU + 1) : 2.5 * Math.sin((t / 8) * TAU);
-  c.save(); c.translate(x + drift, y); c.scale(s, s);
-  c.fillStyle = fill; c.fill(CLOUD); c.strokeStyle = stroke; c.lineWidth = 1.3 / s; c.lineJoin = "round"; c.stroke(CLOUD); c.restore();
+  c.save(); c.translate(x + drift, y); c.scale(s, s); c.fillStyle = fill; c.fill(CLOUD); c.restore();
 }
-function drops(c, xs, y, len, w, t) {
-  c.save(); c.strokeStyle = IC.rain; c.lineWidth = w; c.lineCap = "round";
+function drops(c, xs, y, t, speed = 1.2, sc = 1) {
   xs.forEach((x, i) => {
-    const ph = ((t + i * 0.37) % 1.1) / 1.1, dy = -5 + 14 * ph;
-    c.globalAlpha *= 1; const a = ph < .25 ? ph / .25 : 1 - (ph - .25) / .75;
-    c.save(); c.globalAlpha = c.globalAlpha * a; c.beginPath(); c.moveTo(x, y + dy); c.lineTo(x - 1.5, y + len + dy); c.stroke(); c.restore();
+    const ph = ((t + i * 0.41) % speed) / speed, dy = -4 + 12 * ph;
+    const a = ph < .2 ? ph / .2 : 1 - (ph - .2) / .8;
+    c.save(); c.globalAlpha *= a; c.translate(x, y + dy); c.scale(sc, sc); c.fillStyle = IC.drop; c.fill(DROP); c.restore();
   });
-  c.restore();
 }
 function bolt(c, t) {
   const p = (t % 2.4) / 2.4, on = (p > .40 && p < .47) || (p > .51 && p < .57);
-  c.save(); c.globalAlpha *= on ? 1 : .2; c.beginPath();
-  [[35,40],[27,52],[33,52],[29,63],[42,47],[36,47],[40,40]].forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+  c.save(); c.globalAlpha *= on ? 1 : .7; c.beginPath();
+  [[36,40],[25,54],[33,54],[29,66],[42,50],[34,50],[38,40]].forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y)));
   c.closePath(); c.fillStyle = IC.bolt; c.fill(); c.restore();
 }
 function fog(c, t) {
   const o = 4 * Math.sin((t / 6) * TAU);
-  c.save(); c.strokeStyle = IC.midS; c.lineWidth = 3; c.lineCap = "round"; c.beginPath();
-  c.moveTo(12 + o, 50); c.lineTo(46 + o, 50); c.moveTo(18 - o, 57); c.lineTo(52 - o, 57); c.stroke(); c.restore();
+  c.save(); c.fillStyle = IC.fog;
+  c.beginPath(); c.roundRect(12 + o, 47, 36, 6, 3); c.fill();
+  c.beginPath(); c.roundRect(18 - o, 56, 34, 6, 3); c.fill(); c.restore();
 }
 const ICONS = {
-  "sol":           { n:"Ensolarado", d:(c,t)=>sun(c,32,32,13,t) },
-  "sol-nuvens":    { n:"Sol entre nuvens", d:(c,t)=>{ sun(c,24,23,10,t); cloud(c,14,14,1.05,"#F3F6FA",IC.lightS,t); } },
-  "sol-carregado": { n:"Sol com muitas nuvens", d:(c,t)=>{ sun(c,22,21,9,t); cloud(c,13,15,1.08,IC.mid,IC.midS,t); } },
-  "nublado":       { n:"Nublado", d:(c,t)=>{ cloud(c,2,4,.95,IC.mid,IC.midS,t,1); cloud(c,16,14,1.05,IC.light,IC.lightS,t); } },
-  "chuva-fina":    { n:"Chuvisco", d:(c,t)=>{ cloud(c,9,2,1.12,IC.light,IC.lightS,t); drops(c,[22,32,42],49,3.5,2.6,t); } },
-  "chuva":         { n:"Chuva", d:(c,t)=>{ cloud(c,9,2,1.12,IC.mid,IC.midS,t); drops(c,[20,28,36,44],48,7,3,t); } },
-  "chuva-forte":   { n:"Chuva forte", d:(c,t)=>{ cloud(c,9,2,1.12,IC.dark,IC.darkS,t); drops(c,[17,24,31,38,45],47,10,3.2,t); } },
-  "pancadas":      { n:"Sol e pancadas de chuva", d:(c,t)=>{ sun(c,22,19,9,t); cloud(c,13,10,1.08,IC.mid,IC.midS,t); drops(c,[26,35,44],52,7,3,t); } },
-  "trovoadas":     { n:"Chuva com trovoadas", d:(c,t)=>{ cloud(c,9,0,1.12,IC.dark,IC.darkS,t); bolt(c,t); drops(c,[19,46],46,7,3,t); } },
-  "neblina":       { n:"Névoa / neblina", d:(c,t)=>{ cloud(c,9,0,1.12,IC.light,IC.lightS,t); fog(c,t); } },
+  "sol":           { n:"Ensolarado", d:(c,t)=>sun(c,32,32,24,15,t) },
+  "sol-nuvens":    { n:"Sol entre nuvens", d:(c,t)=>{ sun(c,25,23,16,10,t); cloud(c,14,15,1.1,IC.light,t); } },
+  "sol-carregado": { n:"Sol com muitas nuvens", d:(c,t)=>{ sun(c,23,21,14,9,t); cloud(c,13,14,1.12,IC.mid,t); } },
+  "nublado":       { n:"Nublado", d:(c,t)=>{ cloud(c,3,4,.95,IC.mid,t,1); cloud(c,15,14,1.08,IC.light,t); } },
+  "chuva-fina":    { n:"Chuvisco", d:(c,t)=>{ cloud(c,9,1,1.12,IC.mid,t); drops(c,[22,33,44],50,t,1.4,.65); } },
+  "chuva":         { n:"Chuva", d:(c,t)=>{ cloud(c,9,1,1.12,IC.rainCloud,t); drops(c,[21,33,45],49,t); } },
+  "chuva-forte":   { n:"Chuva forte", d:(c,t)=>{ cloud(c,9,0,1.12,IC.dark,t); drops(c,[17,27,37,47],48,t,.8,1.05); } },
+  "pancadas":      { n:"Sol e pancadas de chuva", d:(c,t)=>{ sun(c,23,20,14,9,t); cloud(c,13,10,1.1,IC.mid,t); drops(c,[28,41],51,t); } },
+  "trovoadas":     { n:"Chuva com trovoadas", d:(c,t)=>{ cloud(c,9,0,1.12,IC.dark,t); bolt(c,t); } },
+  "neblina":       { n:"Névoa / neblina", d:(c,t)=>{ cloud(c,9,-2,1.12,IC.light,t); fog(c,t); } },
 };
 function drawIcon(c, key, x, y, size, t) {
   const ic = ICONS[key] || ICONS["sol"];
@@ -447,7 +445,9 @@ function montarTimeline() {
 // Renderização de um quadro
 // =====================================================================
 const PIN = new Path2D("M34 90 C34 90 4 56 4 34 A30 30 0 1 1 64 34 C64 56 34 90 34 90Z");
-function font(w, px) { return `${w} ${px}px ${TEMA.font}, Arial, sans-serif`; }
+// pesos pedidos no desenho → pesos da Roboto embutidos (400, 500, 700, 900)
+const PESO = { 500:400, 600:500, 700:500, 800:700, 900:900 };
+function font(w, px) { return `${PESO[w] || w} ${px}px ${TEMA.font}, Arial, sans-serif`; }
 function wrap(c, txt, maxW) {
   const words = String(txt).split(/\s+/); const lines = []; let line = "";
   for (const w of words) { const test = line ? line + " " + w : w; if (c.measureText(test).width <= maxW || !line) line = test; else { lines.push(line); line = w; } }
@@ -550,7 +550,7 @@ function drawCard(c, L, city, a, dy, t) {
     c.fillStyle = bg; c.beginPath(); c.roundRect(bx, by, bw, k.boxH, 24); c.fill();
     c.fillStyle = col; c.font = font(700, k.lab); c.letterSpacing = k.lab * 0.16 + "px";
     c.fillText(lab, bx + 24, by + 18 + k.lab); c.letterSpacing = "0px";
-    c.font = font(800, k.num); c.fillText((hasNum(v) ? Math.round(v) : "–") + "°", bx + 22, by + k.boxH - 20);
+    c.font = font(900, k.num); c.fillText((hasNum(v) ? Math.round(v) : "–") + "°", bx + 22, by + k.boxH - 20);
   });
   c.restore();
 }
@@ -562,7 +562,7 @@ function drawChrome(c, L, t) {
   c.save(); c.globalAlpha = aT; c.translate(0, -30 * (1 - aT)); c.textAlign = "left";
   c.font = font(700, L.eyebrow.size); c.letterSpacing = L.eyebrow.size * 0.22 + "px"; c.fillStyle = TEMA.acc;
   plainText(c, "RIO GRANDE DO NORTE", L.eyebrow.x, L.eyebrow.y); c.letterSpacing = "0px";
-  c.font = font(800, L.title.size); c.fillStyle = TEMA.ink; c.letterSpacing = -L.title.size * 0.025 + "px";
+  c.font = font(800, L.title.size); c.fillStyle = TEMA.ink; c.letterSpacing = -L.title.size * 0.01 + "px";
   plainText(c, "Previsão do Tempo", L.title.x, L.title.y); c.letterSpacing = "0px";
   c.restore();
   // data
@@ -963,8 +963,8 @@ $("#btn-export").onclick = async () => {
 // =====================================================================
 (async function iniciar() {
   try {
-    await Promise.all(Object.entries(window.FONTES).map(async ([w, b64]) => {
-      const f = new FontFace("Plus Jakarta Sans", `url(data:font/woff2;base64,${b64})`, { weight:w }); await f.load(); document.fonts.add(f);
+    await Promise.all(Object.entries(window.FONTES.pesos).map(async ([w, b64]) => {
+      const f = new FontFace(window.FONTES.familia, `url(data:font/woff2;base64,${b64})`, { weight:w }); await f.load(); document.fonts.add(f);
     }));
   } catch (e) { console.warn("Fonte não carregada", e); }
   const logo = $("#logo"); iconCanvases.add(logo); logo.dataset.icon = "sol-nuvens";
