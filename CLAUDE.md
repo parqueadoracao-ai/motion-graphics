@@ -38,6 +38,15 @@ sai do `variantes.json`. Estilos de ícone disponíveis: `chapado` (padrão) e `
 https://claude.ai/artifact/2PRaowBj4TapFWz8DjF44W (capabilities `downloads` e `desktop`). Para atualizar,
 publique o mesmo arquivo nessa URL. Dentro do artefato o `fetch` para outros sites é bloqueado: a busca de
 previsão só funciona no app instalado (via `curl`, com "acesso total") ou no HTML aberto direto no Chrome.
+
+**REGRA DO USUÁRIO — toda mudança no Tempo RN é publicada em todos os lugares, sem precisar pedir:**
+1. Edite `app.html` (fonte única), suba `VERSAO` e registre em `HISTORICO.md`.
+2. `npm run build:previsao-rn` e confira (quadros renderizados; exportação quando mexer em vídeo).
+3. Republique `previsao-rn/artefato.html` **na mesma URL** do artefato acima (o app instalado pelo
+   Claude desktop recebe a versão nova sozinho). Se a versão oficial mudar, a entrada com `"artefato": true`
+   em `variantes.json` passa a ser a versão em uso.
+4. Commit e push no branch da sessão (GitHub).
+5. Envie o HTML ao usuário e diga a versão e o que mudou.
 Tema atual: Atlântico com fonte Inter e ícones "chapado geométrico". A fonte Sora fica reservada para o segundo projeto/tema.
 
 ## Padrões
