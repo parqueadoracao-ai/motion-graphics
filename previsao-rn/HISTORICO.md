@@ -5,6 +5,12 @@ Numeração `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** (1.**1**.0): recurso novo (ex.: período "Próximos 4 dias", novo tema).
 - **MAIOR** (**2**.0.0): mudança grande que altera o jeito de usar.
 
+## 1.6.0 — 27/11/2026
+
+- Versão oficial em uso: mesmo conteúdo da 1.1.5C (ícones traço fino, caixa dos graus com contorno,
+  contorno do RN alinhado às divisas, fonte Inter, app "Tempo RN"), só com o número novo.
+- Publicada no artefato https://claude.ai/artifact/2PRaowBj4TapFWz8DjF44W.
+
 ## 1.1.5C — 27/11/2026 (variante para escolha)
 
 - Base da 1.1.5B (ícones traço fino).
