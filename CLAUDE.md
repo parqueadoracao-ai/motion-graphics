@@ -23,6 +23,13 @@ public/whoosh.wav    # gerado por scripts/make-whoosh.py (sintetizado, sem sampl
 `timing.ts` próprio, e registre a composição em `src/Root.tsx`. Reaproveite `src/Whoosh.tsx`.
 Adicione um script `render:<nome>` no `package.json` gerando `out/<nome>.mp4`.
 
+### Previsão do Tempo RN (app HTML, não Remotion)
+
+`previsao-rn/` é um editor em HTML que gera o MP4 no navegador (WebCodecs + mp4-muxer).
+Edite `previsao-rn/app.html` e rode `npm run build:previsao-rn` para gerar `previsao-rn/previsao-rn.html`
+(arquivo único entregue ao usuário, versionado). Detalhes em `previsao-rn/README.md`.
+Tema atual: Atlântico (Plus Jakarta Sans). A fonte Sora fica reservada para o segundo projeto/tema.
+
 ## Padrões
 
 - **Formato:** 1920×1080, 30 fps, H.264 + AAC, salvo em `out/` (pasta ignorada pelo Git).

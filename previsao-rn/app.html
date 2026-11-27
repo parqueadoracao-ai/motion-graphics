@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Previsão do Tempo RN</title>
+<style>
+:root{
+  --bg:#EEF3F8; --panel:#FFFFFF; --ink:#0E2240; --muted:#5B6B85; --line:#DCE4EE; --soft:#F5F8FC;
+  --acc:#1F5FD1; --acc-soft:#E6EFFD; --max:#EE5A2A; --err:#C62828; --ok:#16794A;
+  --font:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:500 14px/1.45 var(--font)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:12px}
+.brand canvas{width:44px;height:44px}
+.brand h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 16px;font-weight:700}
+.btn:hover{border-color:var(--acc)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.sm{padding:6px 12px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.link{border:0;background:none;color:var(--acc);font-weight:700;padding:0;font-size:12px}
+.layout{display:grid;grid-template-columns:minmax(380px,520px) 1fr;gap:20px;padding:20px 24px 40px;align-items:start}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}}
+.editor{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel h2{margin:0;font-size:15px;font-weight:800}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}
+.fld>label,.lbl{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+input[type=text],input[type=number],input:not([type]),select,textarea{width:100%;border:1px solid var(--line);background:var(--soft);border-radius:9px;padding:8px 10px;min-width:0}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);background:#fff;outline:none}
+textarea{resize:vertical;line-height:1.5}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--soft)}
+.seg button{border:0;background:transparent;padding:7px 12px;font-weight:700;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--acc);color:#fff}
+.check{display:flex;align-items:center;gap:8px;font-weight:600}
+.city{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--soft);position:relative}
+.city.invalid{border-color:#F3B4B4}
+.city-head{display:flex;align-items:center;gap:8px}
+.num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;font-weight:800;display:grid;place-items:center;font-size:13px}
+.city-head input{font-weight:700;font-size:15px;background:#fff}
+.ord{display:flex;gap:4px}
+.ord button{border:1px solid var(--line);background:#fff;border-radius:7px;width:28px;height:30px;font-weight:800;color:var(--muted)}
+.c-err{color:var(--err);font-size:12px;font-weight:600}
+.row4{display:grid;grid-template-columns:70px 70px 78px 1fr;gap:8px;align-items:end}
+.row4 input{background:#fff}
+.icbtn{display:flex;align-items:center;gap:8px;width:100%;border:1px solid var(--line);background:#fff;border-radius:9px;padding:3px 8px;text-align:left;min-height:38px}
+.icbtn canvas{width:32px;height:32px;flex:none}
+.icbtn .nm{flex:1;font-weight:700;font-size:13px;line-height:1.2}
+.icbtn .car{color:var(--muted);font-size:12px}
+.menu{position:absolute;left:10px;right:10px;z-index:30;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(14,34,64,.2);padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.menu[hidden]{display:none}
+.menu button{border:0;background:transparent;display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;text-align:left;font-size:13px;font-weight:700}
+.menu button:hover,.menu button[aria-checked=true]{background:var(--acc-soft)}
+.menu canvas{width:30px;height:30px;flex:none}
+.fetch-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.c-status{font-size:12px;color:var(--muted)}
+.c-status.err{color:var(--err)}.c-status.ok{color:var(--ok)}
+.texto{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--line);padding-top:10px}
+.texto-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.texto-head .lbl{margin-right:auto}
+.texto textarea{background:#fff}
+.texto-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.texto-meta b{color:var(--ink)}
+.dur{display:flex;align-items:center;gap:6px}
+.dur input{width:72px;background:#fff;padding:5px 8px}
+.badge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 6px;background:var(--acc-soft);color:var(--acc)}
+.badge.man{background:#FFF1E0;color:#B5560B}
+.preview{position:sticky;top:90px;display:flex;flex-direction:column;gap:12px;min-width:0}
+@media (max-width:1100px){.preview{position:static}}
+.stage{background:#0E2240;border-radius:16px;overflow:hidden;display:flex;justify-content:center;box-shadow:0 18px 50px rgba(14,34,64,.18)}
+.stage canvas{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain}
+.stage.v canvas{width:auto;height:72vh;max-width:100%}
+.transport{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.transport .play{width:40px;height:40px;border-radius:50%;border:0;background:var(--acc);color:#fff;font-size:16px;flex:none}
+.transport input[type=range]{flex:1;accent-color:var(--acc)}
+.time{font-variant-numeric:tabular-nums;font-weight:700;min-width:96px;text-align:right}
+.segs{display:flex;gap:3px;border-radius:10px;overflow:hidden}
+.segs button{border:0;padding:6px 4px;font-size:11px;font-weight:700;background:#DCE6F3;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.segs button.city-seg{background:var(--acc-soft)}
+.segs button.on{background:var(--acc);color:#fff}
+.export-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.export-box[hidden]{display:none}
+.bar{height:10px;background:var(--soft);border-radius:10px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+.hint{color:var(--muted);font-size:12px;margin:0}
+.calib{display:flex;flex-direction:column;gap:8px}
+.calib-row{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;font-size:13px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;z-index:50}
+.toast[hidden]{display:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · 167 municípios</p></div></div>
+  <div class="top-actions">
+    <button class="btn" id="btn-copy" type="button">Copiar textos do apresentador</button>
+    <button class="btn pri" id="btn-export" type="button">Exportar MP4</button>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="editor">
+    <div class="panel">
+      <h2>Vídeo</h2>
+      <div class="grid2">
+        <div class="fld"><label for="f-periodo">Período</label>
+          <select id="f-periodo"><option value="0">Hoje</option><option value="1">Amanhã</option><option disabled>Próximos 4 dias (em breve)</option><option disabled>Fim de semana (em breve)</option></select></div>
+        <div class="fld"><span class="lbl">Formato</span>
+          <div class="seg" id="f-fmt"><button type="button" data-fmt="h">Horizontal 16:9</button><button type="button" data-fmt="v">Vertical 9:16</button></div></div>
+      </div>
+      <div class="fld"><label for="f-date">Data na tela</label><input id="f-date" type="text"></div>
+      <div class="fld"><label for="f-src">Fonte no rodapé</label><input id="f-src" type="text"></div>
+      <label class="check"><input type="checkbox" id="f-resumo"> Mostrar resumo das 4 cidades no final</label>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Municípios</h2><button class="btn sm" id="btn-fetch-all" type="button">⟳ Buscar previsão dos 4</button></div>
+      <div id="cities" style="display:flex;flex-direction:column;gap:12px"></div>
+      <p class="hint">A busca usa o Open-Meteo (gratuito, sem cadastro). Os números e o ícone continuam editáveis; o ícone sugerido vale conferir. Para usar dados do Climatempo, digite por cima e ajuste a fonte no rodapé.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Apresentador</h2>
+      <div class="grid2">
+        <div class="fld"><label for="f-wpm">Ritmo de fala (palavras por minuto)</label><input id="f-wpm" type="number" min="90" max="260" step="1"></div>
+        <div class="fld"><span class="lbl">Duração de cada cidade</span><span class="hint" style="margin-top:4px">3 s de chegada da câmera + tempo de fala estimado. Pode ser ajustada em cada cidade.</span></div>
+      </div>
+      <details>
+        <summary style="cursor:pointer;font-weight:700">Calibrar com o tempo real do apresentador</summary>
+        <div class="calib" id="calib"></div>
+      </details>
+    </div>
+  </section>
+
+  <section class="preview">
+    <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+    <div class="transport">
+      <button class="play" id="btn-play" type="button" aria-label="Reproduzir">▶</button>
+      <input type="range" id="scrub" min="0" max="1" step="0.0333" value="0" aria-label="Posição no vídeo">
+      <span class="time" id="time">0:00 / 0:00</span>
+    </div>
+    <div class="segs" id="segs"></div>
+    <div class="export-box" id="export-box" hidden>
+      <strong id="export-title">Gerando vídeo…</strong>
+      <div class="bar"><i id="export-bar"></i></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="hint" id="export-status"></span><button class="btn sm" id="btn-cancel" type="button">Cancelar</button></div>
+    </div>
+    <p class="hint">O MP4 é gerado aqui mesmo, no navegador (Chrome ou Edge atualizados), em 30 fps e sem som. Os dados ficam salvos neste computador.</p>
+  </section>
+</main>
+<datalist id="mun-list"></datalist>
+<div class="toast" id="toast" hidden></div>
+
+<script>/*__MAPA__*/</script>
+<script>/*__FONTES__*/</script>
+<script>/*__MP4MUXER__*/</script>
+<script>
+"use strict";
+// =====================================================================
+// Tema Atlântico
+// =====================================================================
+const TEMA = {
+  sea1:"#86B3E0", sea2:"#ADCDEC", neigh:"#EEF3F8", neighS:"#C7D7EA", land:"#FFFFFF", lines:"#DCE6F1",
+  border:"#7FA6D3", hl:"#D3E3FF", ink:"#0E2240", acc:"#1F5FD1", muted:"#5B6B85",
+  min:"#1F5FD1", minbg:"#E6EFFD", max:"#EE5A2A", maxbg:"#FFEEE6", font:'"Plus Jakarta Sans"',
+};
+const FPS = 30;
+// ---- tempos (segundos) ----
+const T_INTRO = 1.5;         // mapa + título; a câmera parte para a 1ª cidade em 1,5 s
+const T_TRAVEL = 1.6;        // viagem da câmera até a cidade
+const T_PIN = 1.45, T_PIN_D = 0.55;
+const T_LINE = 1.75, T_LINE_D = 0.9;
+const T_FILL = 2.3, T_FILL_D = 0.6;
+const T_LABEL = 2.5, T_LABEL_D = 0.6;
+const T_CARD = 2.9, T_CARD_D = 0.7;
+const T_EXIT = 0.5;          // saída da cidade anterior
+const T_CHEGADA = 3;         // somado ao tempo de fala para a duração automática
+const T_OUT_TRAVEL = 1.8, T_OUTRO_RESUMO = 5.5, T_OUTRO_SIMPLES = 3;
+const DUR_MIN = 5;
+
+const LAYOUT = {
+  h:{W:1920,H:1080, fit:{x:170,y:230,w:1580,h:720}, pin:{x:640,y:640}, zoom:320, pinSc:1,
+     eyebrow:{x:96,y:100,size:22}, title:{x:96,y:176,size:74}, date:{right:96,y:82,h:62,size:26},
+     foot:{x:96,bottom:56,h:50,size:22},
+     label:{mode:"side",dx:64,dy:-78,size:84,min:52,maxW:480},
+     card:{x:1250,y:300,w:570,pad:44,icon:150,gap:18,boxH:140,cond:34,rain:22,lab:20,num:96,r:36},
+     chip:{h:64,size:24,icon:44}},
+  v:{W:1080,H:1920, fit:{x:60,y:560,w:960,h:660}, pin:{x:540,y:800}, zoom:380, pinSc:1.15,
+     eyebrow:{x:72,y:150,size:26}, title:{x:72,y:240,size:92}, date:{left:72,y:290,h:66,size:28},
+     foot:{x:72,bottom:70,h:56,size:26},
+     label:{mode:"center",x:540,y:1150,size:96,min:60,maxW:940},
+     card:{x:80,y:1210,w:920,pad:56,icon:210,gap:26,boxH:190,cond:46,rain:30,lab:26,num:132,r:44},
+     chip:{h:76,size:28,icon:52}},
+};
+
+// =====================================================================
+// Utilidades
+// =====================================================================
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const easeInOut = (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const easeBack = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+const $ = (s, el = document) => el.querySelector(s);
+const fmtTime = (t) => { t = Math.max(0, t); const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ":" + String(s).padStart(2, "0"); };
+const fmtSec = (s) => (Math.round(s * 10) / 10).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+const hasNum = (v) => v !== "" && v !== null && v !== undefined && !isNaN(+v);
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => (t.hidden = true), 2600); }
+
+// =====================================================================
+// Mapa
+// =====================================================================
+const MAPA = window.MAPA_RN;
+const MUN = MAPA.municipios;
+const MUN_BY_NAME = new Map(MUN.map((m) => [norm(m.nome), m]));
+const P_RN = new Path2D(MAPA.rn), P_VIZ = new Path2D(MAPA.vizinhos);
+const P_ALL = new Path2D(MUN.map((m) => m.d).join(""));
+const pathCache = new Map();
+const munPath = (m) => { if (!pathCache.has(m.id)) pathCache.set(m.id, new Path2D(m.d)); return pathCache.get(m.id); };
+
+// =====================================================================
+// Ícones (desenhados em canvas, espaço 64×64, animados pelo tempo t)
+// =====================================================================
+const IC = { sun:"#FFBE2E", ray:"#FFA81A", light:"#E2E9F2", lightS:"#C6D2E1", mid:"#AEBBCD", midS:"#94A3B8", dark:"#6F7F97", darkS:"#5B6A82", rain:"#2F86F6", bolt:"#FFC21A" };
+const CLOUD = new Path2D("M10 39 a9 9 0 0 1 -1.5 -17.9 a12.5 12.5 0 0 1 24.3 -3.6 a8.6 8.6 0 0 1 1.5 21.5 Z");
+const TAU = Math.PI * 2;
+function sun(c, cx, cy, r, t) {
+  c.save(); c.translate(cx, cy); c.rotate((t / 14) * TAU);
+  c.strokeStyle = IC.ray; c.lineWidth = 3.4; c.lineCap = "round"; c.beginPath();
+  for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4, x = Math.cos(a), y = Math.sin(a); c.moveTo(x * (r + 4), y * (r + 4)); c.lineTo(x * (r + 9), y * (r + 9)); }
+  c.stroke(); c.restore();
+  c.beginPath(); c.arc(cx, cy, r * (1 + 0.03 * Math.sin((t / 3) * TAU)), 0, TAU); c.fillStyle = IC.sun; c.fill();
+}
+function cloud(c, x, y, s, fill, stroke, t, slow) {
+  const drift = slow ? 2.5 * Math.sin((t / 11) * TAU + 1) : 2.5 * Math.sin((t / 8) * TAU);
+  c.save(); c.translate(x + drift, y); c.scale(s, s);
+  c.fillStyle = fill; c.fill(CLOUD); c.strokeStyle = stroke; c.lineWidth = 1.3 / s; c.lineJoin = "round"; c.stroke(CLOUD); c.restore();
+}
+function drops(c, xs, y, len, w, t) {
+  c.save(); c.strokeStyle = IC.rain; c.lineWidth = w; c.lineCap = "round";
+  xs.forEach((x, i) => {
+    const ph = ((t + i * 0.37) % 1.1) / 1.1, dy = -5 + 14 * ph;
+    c.globalAlpha *= 1; const a = ph < .25 ? ph / .25 : 1 - (ph - .25) / .75;
+    c.save(); c.globalAlpha = c.globalAlpha * a; c.beginPath(); c.moveTo(x, y + dy); c.lineTo(x - 1.5, y + len + dy); c.stroke(); c.restore();
+  });
+  c.restore();
+}
+function bolt(c, t) {
+  const p = (t % 2.4) / 2.4, on = (p > .40 && p < .47) || (p > .51 && p < .57);
+  c.save(); c.globalAlpha *= on ? 1 : .2; c.beginPath();
+  [[35,40],[27,52],[33,52],[29,63],[42,47],[36,47],[40,40]].forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+  c.closePath(); c.fillStyle = IC.bolt; c.fill(); c.restore();
+}
+function fog(c, t) {
+  const o = 4 * Math.sin((t / 6) * TAU);
+  c.save(); c.strokeStyle = IC.midS; c.lineWidth = 3; c.lineCap = "round"; c.beginPath();
+  c.moveTo(12 + o, 50); c.lineTo(46 + o, 50); c.moveTo(18 - o, 57); c.lineTo(52 - o, 57); c.stroke(); c.restore();
+}
+const ICONS = {
+  "sol":           { n:"Ensolarado", d:(c,t)=>sun(c,32,32,13,t) },
+  "sol-nuvens":    { n:"Sol entre nuvens", d:(c,t)=>{ sun(c,24,23,10,t); cloud(c,14,14,1.05,"#F3F6FA",IC.lightS,t); } },
+  "sol-carregado": { n:"Sol com muitas nuvens", d:(c,t)=>{ sun(c,22,21,9,t); cloud(c,13,15,1.08,IC.mid,IC.midS,t); } },
+  "nublado":       { n:"Nublado", d:(c,t)=>{ cloud(c,2,4,.95,IC.mid,IC.midS,t,1); cloud(c,16,14,1.05,IC.light,IC.lightS,t); } },
+  "chuva-fina":    { n:"Chuvisco", d:(c,t)=>{ cloud(c,9,2,1.12,IC.light,IC.lightS,t); drops(c,[22,32,42],49,3.5,2.6,t); } },
+  "chuva":         { n:"Chuva", d:(c,t)=>{ cloud(c,9,2,1.12,IC.mid,IC.midS,t); drops(c,[20,28,36,44],48,7,3,t); } },
+  "chuva-forte":   { n:"Chuva forte", d:(c,t)=>{ cloud(c,9,2,1.12,IC.dark,IC.darkS,t); drops(c,[17,24,31,38,45],47,10,3.2,t); } },
+  "pancadas":      { n:"Sol e pancadas de chuva", d:(c,t)=>{ sun(c,22,19,9,t); cloud(c,13,10,1.08,IC.mid,IC.midS,t); drops(c,[26,35,44],52,7,3,t); } },
+  "trovoadas":     { n:"Chuva com trovoadas", d:(c,t)=>{ cloud(c,9,0,1.12,IC.dark,IC.darkS,t); bolt(c,t); drops(c,[19,46],46,7,3,t); } },
+  "neblina":       { n:"Névoa / neblina", d:(c,t)=>{ cloud(c,9,0,1.12,IC.light,IC.lightS,t); fog(c,t); } },
+};
+function drawIcon(c, key, x, y, size, t) {
+  const ic = ICONS[key] || ICONS["sol"];
+  c.save(); c.translate(x, y); c.scale(size / 64, size / 64); ic.d(c, t); c.restore();
+}
+
+// =====================================================================
+// Estado (salvo neste computador)
+// =====================================================================
+const KEY = "previsao-rn-v1";
+const DIAS = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+function dataTexto(offset) {
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  const w = DIAS[d.getDay()];
+  return w.charAt(0).toUpperCase() + w.slice(1) + ", " + d.getDate() + " de " + MESES[d.getMonth()];
+}
+const novaCidade = (nome, min, max, rain, icon) => ({ nome, min, max, rain, icon, len:"curto", seed:0, text:"", textEdited:false, dur:null, real:"" });
+function padrao() {
+  return {
+    fmt:"h", periodo:0, date:dataTexto(0), dateAuto:true, src:"climatempo.com.br", resumo:true, wpm:170,
+    cities:[ novaCidade("Natal",24,31,20,"sol-nuvens"), novaCidade("Mossoró",25,36,0,"sol"), novaCidade("Caicó",23,35,60,"pancadas"), novaCidade("Pau dos Ferros",22,34,80,"trovoadas") ],
+  };
+}
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) || padrao(); } catch (e) { S = padrao(); }
+if (!S.cities || S.cities.length !== 4) S = padrao();
+if (S.dateAuto) S.date = dataTexto(+S.periodo || 0);
+let saveT;
+function salvar() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 300); }
+
+// =====================================================================
+// Texto do apresentador
+// =====================================================================
+const COND = {
+  "sol":["sol o dia inteiro","tempo firme e muito sol","céu aberto e sol forte"],
+  "sol-nuvens":["sol entre nuvens","sol com algumas nuvens","tempo firme com sol entre nuvens"],
+  "sol-carregado":["sol com muitas nuvens","muitas nuvens e aberturas de sol","céu carregado com aberturas de sol"],
+  "nublado":["céu nublado","tempo nublado","muitas nuvens"],
+  "chuva-fina":["chuvisco","chuva fraca","garoa e céu encoberto"],
+  "chuva":["chuva","tempo chuvoso","céu encoberto e chuva"],
+  "chuva-forte":["chuva forte","chuva intensa","chuva de forte intensidade"],
+  "pancadas":["sol e pancadas de chuva","sol com pancadas de chuva","pancadas de chuva entre períodos de sol"],
+  "trovoadas":["chuva com trovoadas","pancadas de chuva com raios","chuva acompanhada de trovoadas"],
+  "neblina":["névoa","neblina","céu encoberto por névoa"],
+};
+const pick = (arr, seed, salt) => arr[Math.abs(seed * 7 + salt * 13) % arr.length];
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+function diaInfo() {
+  const n = norm(S.date);
+  const nome = DIAS.find((w) => n.startsWith(norm(w)));
+  if (!nome) return { nome:"dia", nesta:"hoje", artigo:"o dia" };
+  const masc = nome === "sábado" || nome === "domingo";
+  return { nome, nesta:(masc ? "neste " : "nesta ") + nome, artigo:(masc ? "o " : "a ") + nome };
+}
+function gerarTexto(c, m) {
+  const nm = m.nome, d = diaInfo(), k = c.icon, sd = (c.seed || 0) + Math.max(0, S.cities.indexOf(c));
+  const cond = pick(COND[k] || COND.sol, sd, 1);
+  const min = hasNum(c.min) ? Math.round(c.min) : null, max = hasNum(c.max) ? Math.round(c.max) : null;
+  const rain = hasNum(c.rain) ? Math.round(c.rain) : null;
+  const severo = k === "chuva-forte" || k === "trovoadas" || (rain !== null && rain >= 80 && (k === "chuva" || k === "pancadas"));
+  const temps = min !== null && max !== null;
+  if (c.len === "curto") {
+    let T = [
+      () => `Em ${nm}, ${d.nome} de ${cond}.` + (temps ? ` Mínima de ${min} e máxima de ${max} graus.` : ""),
+      () => `${nm} tem ${cond} ${d.nesta}` + (temps ? `, com temperaturas entre ${min} e ${max} graus.` : "."),
+      () => `Para quem está em ${nm}: ${cond} ${d.nesta}` + (temps ? `, com mínima de ${min} e máxima de ${max} graus.` : "."),
+    ];
+    if (severo) T = [() => `Atenção em ${nm}: ${cond} ${d.nesta}.` + (temps ? ` Mínima de ${min} e máxima de ${max} graus.` : ""), T[1]];
+    return pick(T, sd, 0)();
+  }
+  const abre = severo
+    ? [`Atenção em ${nm}: ${d.artigo} terá ${cond}.`, `${nm} terá ${cond} ${d.nesta}.`]
+    : [`Em ${nm}, ${d.artigo} será de ${cond}.`, `${nm} terá ${cond} ${d.nesta}.`];
+  let txt = pick(abre, sd, 2);
+  if (temps) {
+    let T;
+    if (max >= 35) T = [`O calor continua forte, com máxima de ${max} graus; a mínima fica em ${min}.`, `Faz muito calor: a máxima chega a ${max} graus, e a mínima fica em ${min}.`];
+    else if (max >= 32) T = [`Faz calor, com máxima de ${max} graus e mínima de ${min}.`, `Os termômetros variam entre ${min} e ${max} graus.`];
+    else if (min <= 20) T = [`O dia começa mais fresco, com mínima de ${min} graus, e a máxima chega a ${max}.`, `A mínima é de ${min} graus, temperatura mais amena, e a máxima fica em ${max}.`];
+    else T = [`A mínima é de ${min} e a máxima de ${max} graus.`, `As temperaturas ficam entre ${min} e ${max} graus.`];
+    txt += " " + pick(T, sd, 3);
+  }
+  if (rain !== null) {
+    let R;
+    if (rain === 0) R = ["Não há previsão de chuva.", "A chance de chuva é nula."];
+    else if (rain <= 20) R = [`A chance de chuva é baixa, de ${rain}%.`, `A chance de chuva é de apenas ${rain}%.`];
+    else if (rain <= 50) R = [`Há ${rain}% de chance de chuva.`, `A chance de chuva fica em ${rain}%.`];
+    else if (rain < 80) R = [`A chance de chuva é de ${rain}%, então vale levar o guarda-chuva.`, `São ${rain}% de chance de chuva; melhor ter o guarda-chuva por perto.`];
+    else R = [`A chance de chuva é alta, de ${rain}%.`, `Chuva praticamente certa: ${rain}% de chance.`];
+    txt += " " + pick(R, sd, 4);
+  }
+  return txt;
+}
+// palavras como faladas: "31" = "trinta e um" (3), "60%" = "sessenta por cento" (3), "sexta-feira" = 2
+function numPalavras(n) { n = Math.abs(Math.round(n)); if (n <= 20 || n === 100) return 1; if (n < 100) return n % 10 ? 3 : 1; return 4; }
+function palavras(txt) {
+  let total = 0;
+  for (const tok of String(txt).replace(/-/g, " ").split(/\s+/)) {
+    if (!tok) continue;
+    const num = tok.match(/^[^\d]*(\d+)(%?)/);
+    if (num) total += numPalavras(+num[1]) + (num[2] ? 2 : 0);
+    else if (/[a-zà-ú]/i.test(tok)) total += 1;
+  }
+  return total;
+}
+const falaSeg = (txt) => (palavras(txt) * 60) / (+S.wpm || 170);
+const durAuto = (txt) => Math.max(DUR_MIN, Math.round((T_CHEGADA + falaSeg(txt)) * 2) / 2);
+
+// =====================================================================
+// Derivados: cidades válidas e linha do tempo
+// =====================================================================
+const munOf = (c) => MUN_BY_NAME.get(norm(c.nome)) || null;
+function textoDe(c) { const m = munOf(c); if (!m) return ""; if (!c.textEdited) c.text = gerarTexto(c, m); return c.text; }
+function durDe(c) { return hasNum(c.dur) ? Math.max(2, +c.dur) : durAuto(textoDe(c)); }
+
+function overviewCam(L) {
+  const [x0, y0, x1, y1] = MAPA.bounds;
+  const s = Math.min(L.fit.w / (x1 - x0), L.fit.h / (y1 - y0));
+  return { cx:(x0 + x1) / 2, cy:(y0 + y1) / 2, s, ax:L.fit.x + L.fit.w / 2, ay:L.fit.y + L.fit.h / 2 };
+}
+function cityCam(L, m, ov) {
+  const bw = m.b[2] - m.b[0], bh = m.b[3] - m.b[1];
+  const s = clamp(L.zoom / Math.max(bw, bh), ov.s * 2.2, ov.s * 9);
+  return { cx:m.c[0], cy:m.c[1], s, ax:L.pin.x, ay:L.pin.y };
+}
+function lerpCam(a, b, e) {
+  const dist = Math.hypot(a.cx - b.cx, a.cy - b.cy) * Math.min(a.s, b.s);
+  const dip = Math.min(0.8, (dist / 1400) * 0.6);
+  const ls = Math.log(a.s) + (Math.log(b.s) - Math.log(a.s)) * e - dip * Math.sin(Math.PI * e);
+  return { cx:a.cx + (b.cx - a.cx) * e, cy:a.cy + (b.cy - a.cy) * e, ax:a.ax + (b.ax - a.ax) * e, ay:a.ay + (b.ay - a.ay) * e, s:Math.exp(ls) };
+}
+const toScreen = (cam, p) => [cam.ax + (p[0] - cam.cx) * cam.s, cam.ay + (p[1] - cam.cy) * cam.s];
+
+let TL;
+function montarTimeline() {
+  const L = LAYOUT[S.fmt], ov = overviewCam(L);
+  const segs = []; let t = T_INTRO;
+  S.cities.forEach((c) => {
+    const m = munOf(c); if (!m) return;
+    const d = durDe(c);
+    segs.push({ c, m, start:t, end:t + d, cam:cityCam(L, m, ov) }); t += d;
+  });
+  const outro = S.resumo && segs.length ? T_OUTRO_RESUMO : T_OUTRO_SIMPLES;
+  TL = { L, ov, segs, outroStart:t, total:t + outro };
+  return TL;
+}
+
+// =====================================================================
+// Renderização de um quadro
+// =====================================================================
+const PIN = new Path2D("M34 90 C34 90 4 56 4 34 A30 30 0 1 1 64 34 C64 56 34 90 34 90Z");
+function font(w, px) { return `${w} ${px}px ${TEMA.font}, Arial, sans-serif`; }
+function wrap(c, txt, maxW) {
+  const words = String(txt).split(/\s+/); const lines = []; let line = "";
+  for (const w of words) { const test = line ? line + " " + w : w; if (c.measureText(test).width <= maxW || !line) line = test; else { lines.push(line); line = w; } }
+  if (line) lines.push(line); return lines;
+}
+
+function drawMap(c, cam, alpha, marks) {
+  c.save(); c.globalAlpha = alpha;
+  c.setTransform(cam.s, 0, 0, cam.s, cam.ax - cam.cx * cam.s, cam.ay - cam.cy * cam.s);
+  const px = 1 / cam.s;
+  c.fillStyle = TEMA.neigh; c.fill(P_VIZ);
+  c.strokeStyle = TEMA.neighS; c.lineWidth = 1.2 * px; c.stroke(P_VIZ);
+  c.save(); c.shadowColor = "rgba(14,34,64,.28)"; c.shadowBlur = 30; c.shadowOffsetY = 10; c.fillStyle = TEMA.land; c.fill(P_RN); c.restore();
+  for (const mk of marks) if (mk.fill > 0) { c.save(); c.globalAlpha = alpha * mk.fill; c.fillStyle = TEMA.hl; c.fill(munPath(mk.m)); c.restore(); }
+  c.strokeStyle = TEMA.lines; c.lineWidth = 1.1 * px; c.lineJoin = "round"; c.stroke(P_ALL);
+  c.strokeStyle = TEMA.border; c.lineWidth = 2.2 * px; c.stroke(P_RN);
+  for (const mk of marks) if (mk.line > 0 && mk.lineA > 0) {
+    c.save(); c.globalAlpha = alpha * mk.lineA; c.strokeStyle = TEMA.acc; c.lineWidth = 4.5 * px; c.lineJoin = "round"; c.lineCap = "round";
+    if (mk.line < 1) c.setLineDash([mk.m.len * mk.line, mk.m.len * 1.2]);
+    c.stroke(munPath(mk.m)); c.restore();
+  }
+  c.restore();
+}
+
+function drawPin(c, x, y, sc, appear, a, t) {
+  if (appear <= 0 || a <= 0) return;
+  c.save(); c.globalAlpha *= a;
+  const ringA = clamp((appear - 0.7) / 0.3);
+  if (ringA > 0) {
+    c.strokeStyle = TEMA.acc; c.lineWidth = 3 * sc;
+    for (const k of [0, 1.1]) {
+      const ph = ((t + k) % 2.2) / 2.2, g = 0.3 + 1.2 * ph;
+      c.save(); c.globalAlpha *= ringA * 0.9 * (1 - ph); c.beginPath(); c.ellipse(x, y, 60 * sc * g, 22 * sc * g, 0, 0, TAU); c.stroke(); c.restore();
+    }
+    c.save(); c.globalAlpha *= ringA * 0.35; c.fillStyle = TEMA.acc; c.beginPath(); c.ellipse(x, y, 9 * sc, 5 * sc, 0, 0, TAU); c.fill(); c.restore();
+  }
+  const p = clamp(appear), s = 0.4 + 0.6 * easeBack(p), dy = -120 * sc * (1 - easeOut(p));
+  const bob = -5 * sc * (0.5 - 0.5 * Math.cos((t / 2.2) * TAU)) * ringA;
+  c.globalAlpha *= clamp(p * 2.5);
+  c.translate(x, y + dy + bob); c.scale(sc * s, sc * s); c.translate(-34, -90);
+  c.shadowColor = "rgba(10,20,40,.28)"; c.shadowBlur = 14; c.shadowOffsetY = 8;
+  c.fillStyle = TEMA.acc; c.fill(PIN);
+  c.shadowColor = "transparent"; c.beginPath(); c.arc(34, 34, 13, 0, TAU); c.fillStyle = "#fff"; c.fill();
+  c.restore();
+}
+
+function glowText(c, txt, x, y) {
+  c.save(); c.shadowColor = "rgba(255,255,255,.95)"; c.shadowBlur = 18; c.fillText(txt, x, y); c.fillText(txt, x, y); c.restore(); c.fillText(txt, x, y);
+}
+function drawLabel(c, L, nome, px, py, a) {
+  if (a <= 0) return;
+  const lb = L.label; const ease = easeOut(clamp(a));
+  c.save(); c.globalAlpha *= clamp(a * 1.4); c.fillStyle = TEMA.ink; c.textBaseline = "alphabetic";
+  let size = lb.size, lines = [nome];
+  const maxW = lb.mode === "side" ? Math.min(lb.maxW, L.card.x - 50 - (px + lb.dx)) : lb.maxW;
+  c.font = font(800, size);
+  while (c.measureText(nome).width > maxW && size > lb.min) { size -= 2; c.font = font(800, size); }
+  if (c.measureText(nome).width > maxW) lines = wrap(c, nome, maxW).slice(0, 2);
+  const lh = size * 1.02;
+  if (lb.mode === "side") {
+    c.textAlign = "left";
+    const x = px + lb.dx - 30 * (1 - ease), y0 = py + lb.dy - (lines.length - 1) * lh;
+    lines.forEach((ln, i) => glowText(c, ln, x, y0 + i * lh));
+  } else {
+    c.textAlign = "center";
+    const y0 = lb.y + 30 * (1 - ease) - (lines.length - 1) * lh;
+    lines.forEach((ln, i) => glowText(c, ln, lb.x, y0 + i * lh));
+  }
+  c.restore();
+}
+
+function drawCard(c, L, city, a, dy, t) {
+  if (a <= 0) return;
+  const k = L.card, x = k.x, w = k.w, h = k.pad + k.icon + k.gap + k.boxH + k.pad;
+  const ease = easeOut(clamp(a)), y = k.y + dy + 40 * (1 - ease), sc = 0.97 + 0.03 * ease;
+  c.save(); c.globalAlpha *= clamp(a * 1.3);
+  c.translate(x + w / 2, y + h / 2); c.scale(sc, sc); c.translate(-(x + w / 2), -(y + h / 2));
+  c.save(); c.shadowColor = "rgba(10,30,60,.25)"; c.shadowBlur = 60; c.shadowOffsetY = 24;
+  c.fillStyle = "#fff"; c.beginPath(); c.roundRect(x, y, w, h, k.r); c.fill(); c.restore();
+  drawIcon(c, city.icon, x + k.pad, y + k.pad, k.icon, t);
+  // condição + chuva
+  const tx = x + k.pad + k.icon + 22, tw = w - k.pad * 2 - k.icon - 22;
+  let cs = k.cond; c.font = font(700, cs);
+  let lines = wrap(c, (ICONS[city.icon] || ICONS.sol).n, tw);
+  while (lines.length > 2 && cs > 20) { cs -= 2; c.font = font(700, cs); lines = wrap(c, (ICONS[city.icon] || ICONS.sol).n, tw); }
+  const showRain = hasNum(city.rain);
+  const blockH = lines.length * cs * 1.15 + (showRain ? k.rain * 1.9 : 0);
+  let ty = y + k.pad + (k.icon - blockH) / 2 + cs * 0.9;
+  c.fillStyle = TEMA.ink; c.textAlign = "left";
+  lines.forEach((ln) => { c.fillText(ln, tx, ty); ty += cs * 1.15; });
+  if (showRain) {
+    const ry = ty + k.rain * 0.55, ds = k.rain;
+    c.save(); c.translate(tx, ry - ds * 0.85); c.scale(ds / 24, ds / 24); c.beginPath();
+    c.moveTo(12, 3); c.bezierCurveTo(12, 3, 5, 11, 5, 15.5); c.arc(12, 15.5, 7, Math.PI, 0, true); c.bezierCurveTo(19, 11, 12, 3, 12, 3); c.closePath();
+    c.fillStyle = TEMA.acc; c.fill(); c.restore();
+    c.font = font(600, k.rain); c.fillStyle = TEMA.muted; c.fillText(`Chuva ${Math.round(city.rain)}%`, tx + ds * 1.2, ry);
+  }
+  // mín / máx
+  const gap = 16, bw = (w - k.pad * 2 - gap) / 2, by = y + k.pad + k.icon + k.gap;
+  [["MÍN", city.min, TEMA.min, TEMA.minbg], ["MÁX", city.max, TEMA.max, TEMA.maxbg]].forEach(([lab, v, col, bg], i) => {
+    const bx = x + k.pad + i * (bw + gap);
+    c.fillStyle = bg; c.beginPath(); c.roundRect(bx, by, bw, k.boxH, 24); c.fill();
+    c.fillStyle = col; c.font = font(700, k.lab); c.letterSpacing = k.lab * 0.16 + "px";
+    c.fillText(lab, bx + 24, by + 18 + k.lab); c.letterSpacing = "0px";
+    c.font = font(800, k.num); c.fillText((hasNum(v) ? Math.round(v) : "–") + "°", bx + 22, by + k.boxH - 20);
+  });
+  c.restore();
+}
+
+function drawChrome(c, L, t) {
+  const W = L.W, H = L.H;
+  const aT = easeOut(clamp((t - 0.15) / 0.7)), aD = easeOut(clamp((t - 0.3) / 0.6)), aF = easeOut(clamp((t - 0.5) / 0.6));
+  // título
+  c.save(); c.globalAlpha = aT; c.translate(0, -30 * (1 - aT)); c.textAlign = "left";
+  c.font = font(700, L.eyebrow.size); c.letterSpacing = L.eyebrow.size * 0.22 + "px"; c.fillStyle = TEMA.acc;
+  glowText(c, "RIO GRANDE DO NORTE", L.eyebrow.x, L.eyebrow.y); c.letterSpacing = "0px";
+  c.font = font(800, L.title.size); c.fillStyle = TEMA.ink; c.letterSpacing = -L.title.size * 0.025 + "px";
+  glowText(c, "Previsão do Tempo", L.title.x, L.title.y); c.letterSpacing = "0px";
+  c.restore();
+  // data
+  const dm = S.date.match(/^\s*([^,]+),\s*(\d{1,2})\s+de\s+([a-zç]+)/i);
+  let a = S.date.trim(), b = "";
+  if (dm) { const mi = MESES.findIndex((m) => norm(m) === norm(dm[3])); if (mi >= 0) { a = cap(dm[1].trim()); b = String(dm[2]).padStart(2, "0") + "/" + String(mi + 1).padStart(2, "0"); } }
+  if (a) {
+    const D = L.date; c.save(); c.globalAlpha = aD; c.translate(0, -20 * (1 - aD));
+    c.font = font(700, D.size); const wa = c.measureText(a).width, wb = b ? c.measureText(b).width + 14 : 0;
+    const pw = wa + wb + 60, x = D.right !== undefined ? W - D.right - pw : D.left;
+    c.save(); c.shadowColor = "rgba(10,30,60,.18)"; c.shadowBlur = 28; c.shadowOffsetY = 10; c.fillStyle = "#fff"; c.beginPath(); c.roundRect(x, D.y, pw, D.h, D.h / 2); c.fill(); c.restore();
+    const ty = D.y + D.h / 2 + D.size * 0.36;
+    c.fillStyle = TEMA.ink; c.fillText(a, x + 30, ty);
+    if (b) { c.fillStyle = TEMA.acc; c.fillText(b, x + 30 + wa + 14, ty); }
+    c.restore();
+  }
+  // fonte
+  if (S.src.trim()) {
+    const F = L.foot; c.save(); c.globalAlpha = aF;
+    c.font = font(600, F.size); const p1 = "Fonte: ", w1 = c.measureText(p1).width;
+    c.font = font(700, F.size); const w2 = c.measureText(S.src.trim()).width;
+    const y = H - F.bottom - F.h, pw = w1 + w2 + 44;
+    c.fillStyle = "rgba(255,255,255,.88)"; c.beginPath(); c.roundRect(F.x, y, pw, F.h, F.h / 2); c.fill();
+    const ty = y + F.h / 2 + F.size * 0.36;
+    c.font = font(600, F.size); c.fillStyle = TEMA.muted; c.fillText(p1, F.x + 22, ty);
+    c.font = font(700, F.size); c.fillStyle = TEMA.ink; c.fillText(S.src.trim(), F.x + 22 + w1, ty);
+    c.restore();
+  }
+}
+
+function drawResumo(c, L, cam, u, t) {
+  const placed = [];
+  TL.segs.forEach((sg, k) => {
+    const a = easeOut(clamp((u - 1.5 - 0.15 * k) / 0.45)); if (a <= 0) return;
+    const [px, py] = toScreen(cam, sg.m.c);
+    drawPin(c, px, py, 0.55 * L.pinSc, 1, a, t);
+    const ch = L.chip, sz = ch.size;
+    c.save(); c.globalAlpha *= a;
+    c.font = font(800, sz); const nmW = c.measureText(sg.c.nome ? sg.m.nome : "").width;
+    const tMin = (hasNum(sg.c.min) ? Math.round(sg.c.min) : "–") + "°", tMax = (hasNum(sg.c.max) ? Math.round(sg.c.max) : "–") + "°";
+    const wMin = c.measureText(tMin).width, wMax = c.measureText(tMax).width, wSep = c.measureText(" / ").width;
+    const w = 16 + ch.icon + 12 + nmW + 18 + wMin + wSep + wMax + 22, h = ch.h;
+    let x = clamp(px - w / 2, 24, L.W - w - 24), y = py - 70 * L.pinSc - h;
+    const hit = (yy) => placed.some((r) => x < r.x + r.w + 8 && x + w + 8 > r.x && yy < r.y + r.h + 8 && yy + h + 8 > r.y);
+    if (hit(y)) y = py + 18;
+    if (hit(y)) y = py - 70 * L.pinSc - 2 * h - 12;
+    placed.push({ x, y, w, h });
+    y += 16 * (1 - a);
+    c.save(); c.shadowColor = "rgba(10,30,60,.22)"; c.shadowBlur = 24; c.shadowOffsetY = 8; c.fillStyle = "#fff"; c.beginPath(); c.roundRect(x, y, w, h, h / 2); c.fill(); c.restore();
+    drawIcon(c, sg.c.icon, x + 14, y + (h - ch.icon) / 2, ch.icon, t);
+    const ty = y + h / 2 + sz * 0.36; let tx = x + 16 + ch.icon + 12;
+    c.fillStyle = TEMA.ink; c.fillText(sg.m.nome, tx, ty); tx += nmW + 18;
+    c.fillStyle = TEMA.min; c.fillText(tMin, tx, ty); tx += wMin;
+    c.fillStyle = TEMA.muted; c.font = font(600, sz); c.fillText(" / ", tx, ty); tx += wSep;
+    c.font = font(800, sz); c.fillStyle = TEMA.max; c.fillText(tMax, tx, ty);
+    c.restore();
+  });
+}
+
+function render(c, t) {
+  const L = TL.L, W = L.W, H = L.H, ov = TL.ov, segs = TL.segs;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1;
+  const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, TEMA.sea1); g.addColorStop(1, TEMA.sea2);
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+
+  let cam = ov, cur = -1, u = 0, outro = false;
+  if (t >= T_INTRO && t < TL.outroStart) {
+    cur = segs.findIndex((s) => t >= s.start && t < s.end); if (cur < 0) cur = segs.length - 1;
+    u = t - segs[cur].start;
+    const from = cur === 0 ? ov : segs[cur - 1].cam;
+    cam = u < T_TRAVEL ? lerpCam(from, segs[cur].cam, easeInOut(u / T_TRAVEL)) : segs[cur].cam;
+  } else if (t >= TL.outroStart && segs.length) {
+    outro = true; u = t - TL.outroStart;
+    cam = u < T_OUT_TRAVEL ? lerpCam(segs[segs.length - 1].cam, ov, easeInOut(u / T_OUT_TRAVEL)) : ov;
+  }
+  const introA = easeOut(clamp(t / 0.9));
+  if (introA < 1) cam = { ...cam, s:cam.s * (0.93 + 0.07 * introA) };
+
+  // marcações no mapa
+  const marks = [];
+  const nDone = outro ? segs.length : Math.max(cur, 0);
+  for (let j = 0; j < nDone; j++) {
+    const leaving = (outro && j === segs.length - 1) || (!outro && j === cur - 1);
+    const ex = leaving ? clamp(u / T_EXIT) : 1;
+    marks.push({ m:segs[j].m, fill:1 - 0.5 * ex, line:1, lineA:1 - ex });
+  }
+  if (!outro && cur >= 0) marks.push({ m:segs[cur].m, fill:easeOut(clamp((u - T_FILL) / T_FILL_D)), line:easeInOut(clamp((u - T_LINE) / T_LINE_D)), lineA:1 });
+  drawMap(c, cam, introA, marks);
+
+  // cidade que está saindo
+  const prev = outro ? segs.length - 1 : cur - 1;
+  if (prev >= 0 && u < T_EXIT) {
+    const sg = segs[prev], ex = 1 - clamp(u / T_EXIT), [px, py] = toScreen(cam, sg.m.c);
+    drawPin(c, px, py, L.pinSc, 1, ex, t);
+    const pin0 = toScreen(sg.cam, sg.m.c);
+    drawLabel(c, L, sg.m.nome, L.label.mode === "side" ? pin0[0] : px, L.label.mode === "side" ? pin0[1] : py, ex);
+    drawCard(c, L, sg.c, ex, 20 * (1 - ex), t);
+  }
+  // cidade atual
+  if (!outro && cur >= 0) {
+    const sg = segs[cur], [px, py] = toScreen(cam, sg.m.c);
+    drawPin(c, px, py, L.pinSc, clamp((u - T_PIN) / T_PIN_D), 1, t);
+    drawLabel(c, L, sg.m.nome, px, py, clamp((u - T_LABEL) / T_LABEL_D));
+    drawCard(c, L, sg.c, clamp((u - T_CARD) / T_CARD_D), 0, t);
+  }
+  if (outro && S.resumo) drawResumo(c, L, cam, u, t);
+  drawChrome(c, L, t);
+}
+
+// =====================================================================
+// Prévia
+// =====================================================================
+const cv = $("#cv"), cx = cv.getContext("2d");
+let playT = 0, playing = false, lastTs = 0, needDraw = true;
+function ajustarCanvas() {
+  const L = LAYOUT[S.fmt];
+  if (cv.width !== L.W || cv.height !== L.H) { cv.width = L.W; cv.height = L.H; }
+  $("#stage").classList.toggle("v", S.fmt === "v");
+}
+function atualizarTudo() {
+  montarTimeline(); ajustarCanvas();
+  playT = Math.min(playT, TL.total);
+  const sc = $("#scrub"); sc.max = TL.total.toFixed(3);
+  desenharSegs(); atualizarCidadesMeta(); desenharCalib(); salvar(); needDraw = true;
+}
+function desenharSegs() {
+  const el = $("#segs"); el.innerHTML = "";
+  const add = (label, t0, t1, cls) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.title = label + " · " + fmtTime(t0); b.className = cls || ""; b.style.flex = String(Math.max(0.6, t1 - t0)); b.dataset.t = t0; b.onclick = () => { playT = t0 + (cls ? 3.4 : 0); needDraw = true; }; el.appendChild(b); };
+  add("Abertura", 0, T_INTRO);
+  TL.segs.forEach((s) => add(s.m.nome, s.start, s.end, "city-seg"));
+  add("Final", TL.outroStart, TL.total);
+}
+function loop(ts) {
+  const dt = lastTs ? (ts - lastTs) / 1000 : 0; lastTs = ts;
+  if (playing) { playT += dt; if (playT >= TL.total) { playT = TL.total; playing = false; $("#btn-play").textContent = "▶"; } needDraw = true; }
+  if (needDraw || playing) {
+    render(cx, playT);
+    $("#scrub").value = playT; $("#time").textContent = fmtTime(playT) + " / " + fmtTime(TL.total);
+    const segBtns = [...$("#segs").children];
+    segBtns.forEach((b, i) => { const t0 = +b.dataset.t, t1 = i + 1 < segBtns.length ? +segBtns[i + 1].dataset.t : TL.total + 1; b.classList.toggle("on", playT >= t0 && playT < t1); });
+    needDraw = false;
+  }
+  animarIcones(ts / 1000);
+  requestAnimationFrame(loop);
+}
+$("#btn-play").onclick = () => {
+  if (!playing && playT >= TL.total - 0.05) playT = 0;
+  playing = !playing; $("#btn-play").textContent = playing ? "❚❚" : "▶"; lastTs = 0;
+};
+$("#scrub").oninput = (e) => { playT = +e.target.value; playing = false; $("#btn-play").textContent = "▶"; needDraw = true; };
+document.addEventListener("keydown", (e) => { if (e.code === "Space" && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); $("#btn-play").click(); } });
+
+// =====================================================================
+// Editor
+// =====================================================================
+$("#mun-list").innerHTML = MUN.map((m) => `<option value="${m.nome}"></option>`).join("");
+const iconCanvases = new Set();
+function iconCanvas(key, px) {
+  const c = document.createElement("canvas"); c.width = px * 2; c.height = px * 2; c.dataset.icon = key; iconCanvases.add(c); return c;
+}
+function animarIcones(t) {
+  for (const c of iconCanvases) {
+    if (!c.isConnected) { iconCanvases.delete(c); continue; }
+    if (c.offsetParent === null) continue;
+    const g = c.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
+    drawIcon(g, c.dataset.icon, 0, 0, c.width, t);
+  }
+}
+
+function montarCidades() {
+  const host = $("#cities"); host.innerHTML = "";
+  S.cities.forEach((c, i) => {
+    const el = document.createElement("div"); el.className = "city"; el.dataset.i = i;
+    el.innerHTML = `
+      <div class="city-head"><span class="num">${i + 1}</span>
+        <input class="c-nome" type="text" list="mun-list" placeholder="Digite o município" aria-label="Município ${i + 1}" autocomplete="off">
+        <div class="ord"><button type="button" class="c-up" aria-label="Subir">↑</button><button type="button" class="c-down" aria-label="Descer">↓</button></div></div>
+      <div class="c-err" hidden>Município não encontrado. Escolha um nome da lista (167 municípios do RN).</div>
+      <div class="row4">
+        <div class="fld"><label>Mín °C</label><input class="c-min" type="number" step="1"></div>
+        <div class="fld"><label>Máx °C</label><input class="c-max" type="number" step="1"></div>
+        <div class="fld"><label>Chuva %</label><input class="c-rain" type="number" min="0" max="100" step="1"></div>
+        <div class="fld"><label>Condição</label><button type="button" class="icbtn" aria-haspopup="true" title="Clique ou use o botão direito para escolher"><span class="ic-slot"></span><span class="nm"></span><span class="car">▾</span></button></div>
+      </div>
+      <div class="menu" role="menu" hidden></div>
+      <div class="fetch-row"><button type="button" class="btn sm c-fetch">⟳ Buscar previsão</button><span class="c-status"></span></div>
+      <div class="texto">
+        <div class="texto-head"><span class="lbl">Texto do apresentador</span>
+          <div class="seg c-len"><button type="button" data-len="curto">Curto</button><button type="button" data-len="completo">Completo</button></div>
+          <button type="button" class="btn sm c-reroll">↻ Outra versão</button></div>
+        <textarea class="c-text" rows="3" aria-label="Texto do apresentador"></textarea>
+        <div class="texto-meta"><span class="c-words"></span>
+          <span class="dur">Na tela <input class="c-dur" type="number" min="2" max="90" step="0.5" aria-label="Duração na tela em segundos"> s <span class="c-badge badge"></span> <button type="button" class="link c-auto" hidden>usar automático</button></span></div>
+      </div>`;
+    host.appendChild(el);
+    const q = (s) => $(s, el);
+    q(".c-nome").value = c.nome; q(".c-min").value = c.min ?? ""; q(".c-max").value = c.max ?? ""; q(".c-rain").value = c.rain ?? "";
+    const menu = q(".menu");
+    menu.innerHTML = Object.entries(ICONS).map(([k, v]) => `<button type="button" role="menuitemradio" data-k="${k}"><span class="mslot"></span>${v.n}</button>`).join("");
+    menu.querySelectorAll("button").forEach((b) => b.querySelector(".mslot").replaceWith(iconCanvas(b.dataset.k, 30)));
+    const setIcon = () => {
+      const slot = q(".ic-slot") || q(".icbtn canvas"); const cnv = iconCanvas(c.icon, 32); slot.replaceWith(cnv); cnv.classList.add("ic-slot");
+      q(".icbtn .nm").textContent = ICONS[c.icon].n;
+      menu.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.k === c.icon)));
+    };
+    setIcon();
+    const mudou = (regen = true) => { if (regen && !c.textEdited) c.text = ""; atualizarTudo(); };
+    q(".c-nome").addEventListener("input", (e) => { c.nome = e.target.value; c.textEdited = false; mudou(); });
+    q(".c-nome").addEventListener("change", (e) => { const m = munOf(c); if (m && m.nome !== c.nome) { c.nome = m.nome; e.target.value = m.nome; mudou(); } });
+    [["c-min", "min"], ["c-max", "max"], ["c-rain", "rain"]].forEach(([cls, key]) => q("." + cls).addEventListener("input", (e) => { c[key] = e.target.value === "" ? "" : +e.target.value; mudou(); }));
+    const openMenu = (ev) => { ev.preventDefault(); const was = !menu.hidden; fecharMenus(); if (!was) { menu.style.top = (q(".icbtn").getBoundingClientRect().bottom - el.getBoundingClientRect().top + 6) + "px"; menu.hidden = false; } };
+    q(".icbtn").addEventListener("click", openMenu); q(".icbtn").addEventListener("contextmenu", openMenu);
+    menu.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (!b) return; c.icon = b.dataset.k; setIcon(); menu.hidden = true; mudou(); });
+    q(".c-fetch").onclick = () => buscar(i);
+    q(".c-up").onclick = () => mover(i, -1); q(".c-down").onclick = () => mover(i, 1);
+    q(".c-up").disabled = i === 0; q(".c-down").disabled = i === 3;
+    q(".c-len").querySelectorAll("button").forEach((b) => b.onclick = () => { c.len = b.dataset.len; c.textEdited = false; mudou(); });
+    q(".c-reroll").onclick = () => { c.seed = (c.seed || 0) + 1; c.textEdited = false; mudou(); };
+    q(".c-text").addEventListener("input", (e) => { c.text = e.target.value; c.textEdited = true; mudou(false); });
+    q(".c-dur").addEventListener("input", (e) => { c.dur = e.target.value === "" ? null : +e.target.value; mudou(false); });
+    q(".c-auto").onclick = () => { c.dur = null; mudou(false); };
+  });
+}
+function atualizarCidadesMeta() {
+  document.querySelectorAll(".city").forEach((el) => {
+    const c = S.cities[+el.dataset.i], m = munOf(c), q = (s) => $(s, el);
+    el.classList.toggle("invalid", !m && c.nome.trim() !== ""); q(".c-err").hidden = !!m || !c.nome.trim();
+    const txt = textoDe(c);
+    const ta = q(".c-text"); if (document.activeElement !== ta) ta.value = txt;
+    q(".c-len").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.len === c.len)));
+    if (m) {
+      const fala = falaSeg(txt);
+      q(".c-words").innerHTML = `<b>≈ ${fmtSec(fala)} s</b> de fala · ${palavras(txt)} palavras`;
+      const d = durDe(c), di = q(".c-dur"); if (document.activeElement !== di) di.value = d;
+      const man = hasNum(c.dur); q(".c-badge").textContent = man ? "manual" : "automático"; q(".c-badge").classList.toggle("man", man); q(".c-auto").hidden = !man;
+    } else { q(".c-words").textContent = "Escolha um município para gerar o texto."; }
+  });
+}
+function fecharMenus() { document.querySelectorAll(".menu").forEach((m) => (m.hidden = true)); }
+document.addEventListener("click", (e) => { if (!e.target.closest(".icbtn") && !e.target.closest(".menu")) fecharMenus(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharMenus(); });
+function mover(i, d) { const j = i + d; if (j < 0 || j > 3) return; [S.cities[i], S.cities[j]] = [S.cities[j], S.cities[i]]; montarCidades(); atualizarTudo(); }
+
+// campos gerais
+$("#f-periodo").value = String(S.periodo || 0);
+$("#f-periodo").onchange = (e) => { S.periodo = +e.target.value; if (S.dateAuto) { S.date = dataTexto(S.periodo); $("#f-date").value = S.date; } S.cities.forEach((c) => (c.textEdited ? 0 : (c.text = ""))); atualizarTudo(); toast("Período alterado. Clique em “Buscar previsão dos 4” para atualizar os números."); };
+$("#f-date").value = S.date;
+$("#f-date").oninput = (e) => { S.date = e.target.value; S.dateAuto = false; S.cities.forEach((c) => (c.textEdited ? 0 : (c.text = ""))); atualizarTudo(); };
+$("#f-src").value = S.src; $("#f-src").oninput = (e) => { S.src = e.target.value; atualizarTudo(); };
+$("#f-resumo").checked = !!S.resumo; $("#f-resumo").onchange = (e) => { S.resumo = e.target.checked; atualizarTudo(); };
+$("#f-wpm").value = S.wpm; $("#f-wpm").oninput = (e) => { if (+e.target.value >= 60) { S.wpm = +e.target.value; atualizarTudo(); } };
+function marcarFmt() { $("#f-fmt").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.fmt === S.fmt))); }
+$("#f-fmt").querySelectorAll("button").forEach((b) => b.onclick = () => { S.fmt = b.dataset.fmt; marcarFmt(); atualizarTudo(); });
+marcarFmt();
+
+// calibração do ritmo
+function desenharCalib() {
+  const box = $("#calib"); if (box.contains(document.activeElement)) return;
+  const valid = S.cities.filter(munOf);
+  box.innerHTML = `<p class="hint" style="margin-top:8px">Depois do programa, digite quanto tempo o apresentador levou para falar o texto de cada cidade. O app ajusta o ritmo (palavras por minuto).</p>` +
+    valid.map((c) => `<div class="calib-row"><span>${munOf(c).nome} · ${palavras(textoDe(c))} palavras</span><input type="number" min="1" step="0.5" placeholder="seg" data-n="${norm(c.nome)}" value="${c.real || ""}" aria-label="Tempo real em segundos"></div>`).join("") +
+    `<div style="display:flex;gap:10px;align-items:center"><button type="button" class="btn sm" id="btn-calib">Aplicar</button><span class="hint" id="calib-msg"></span></div>`;
+  box.querySelectorAll("input").forEach((inp) => inp.oninput = () => { const c = S.cities.find((x) => norm(x.nome) === inp.dataset.n); if (c) { c.real = inp.value; salvar(); } });
+  $("#btn-calib").onclick = () => {
+    let w = 0, s = 0;
+    S.cities.filter(munOf).forEach((c) => { if (+c.real > 0) { w += palavras(textoDe(c)); s += +c.real; } });
+    if (!s) { $("#calib-msg").textContent = "Preencha pelo menos um tempo."; return; }
+    S.wpm = Math.round((w / s) * 60); $("#f-wpm").value = S.wpm;
+    atualizarTudo(); $("#calib-msg").textContent = `Novo ritmo: ${S.wpm} palavras por minuto.`;
+  };
+}
+
+// =====================================================================
+// Busca de previsão (Open-Meteo)
+// =====================================================================
+// O código de tempo diário do Open-Meteo marca "garoa" com muita facilidade; por isso o ícone
+// sugerido combina chance de chuva, milímetros previstos e cobertura de nuvens.
+function sugerirIcone(code, prob, mm, nuvens) {
+  prob = +prob || 0; mm = +mm || 0; nuvens = nuvens == null ? 50 : +nuvens;
+  if (code === 45 || code === 48) return "neblina";
+  if (code >= 95 && prob >= 40) return "trovoadas";
+  if (mm >= 10 && prob >= 60) return "chuva-forte";
+  if (mm >= 2 && prob >= 50) return nuvens < 60 ? "pancadas" : "chuva";
+  if (mm >= 0.3 && prob >= 40) return nuvens < 60 ? "pancadas" : "chuva-fina";
+  if (nuvens < 25) return "sol";
+  if (nuvens < 55) return "sol-nuvens";
+  if (nuvens < 80) return "sol-carregado";
+  return "nublado";
+}
+async function buscar(i) {
+  const c = S.cities[i], m = munOf(c), el = document.querySelector(`.city[data-i="${i}"]`), st = $(".c-status", el);
+  if (!m) { st.textContent = "Escolha um município válido primeiro."; st.className = "c-status err"; return; }
+  st.textContent = "Buscando…"; st.className = "c-status";
+  try {
+    const [lon, lat] = m.ll, dia = +S.periodo || 0;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,cloud_cover_mean&timezone=America%2FFortaleza&forecast_days=${dia + 1}`;
+    const r = await fetch(url); if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = (await r.json()).daily;
+    c.min = Math.round(d.temperature_2m_min[dia]); c.max = Math.round(d.temperature_2m_max[dia]);
+    c.rain = d.precipitation_probability_max[dia] ?? ""; c.icon = sugerirIcone(d.weather_code[dia], c.rain, d.precipitation_sum?.[dia], d.cloud_cover_mean?.[dia]);
+    if (!c.textEdited) c.text = "";
+    S.src = "open-meteo.com"; $("#f-src").value = S.src;
+    $(".c-min", el).value = c.min; $(".c-max", el).value = c.max; $(".c-rain", el).value = c.rain;
+    const slot = $(".icbtn canvas", el); const cnv = iconCanvas(c.icon, 32); slot.replaceWith(cnv); $(".icbtn .nm", el).textContent = ICONS[c.icon].n;
+    $(".menu", el).querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.k === c.icon)));
+    const h = new Date(); st.textContent = `Atualizado às ${String(h.getHours()).padStart(2, "0")}:${String(h.getMinutes()).padStart(2, "0")} · Open-Meteo`; st.className = "c-status ok";
+    atualizarTudo();
+  } catch (e) {
+    st.textContent = "Não foi possível buscar (sem internet?). Preencha à mão."; st.className = "c-status err";
+  }
+}
+$("#btn-fetch-all").onclick = () => S.cities.forEach((_, i) => buscar(i));
+
+// copiar textos
+$("#btn-copy").onclick = async () => {
+  const txt = S.cities.filter(munOf).map((c, i) => `${i + 1}. ${munOf(c).nome} (≈ ${fmtSec(falaSeg(textoDe(c)))} s)\n${textoDe(c)}`).join("\n\n");
+  try { await navigator.clipboard.writeText(txt); toast("Textos copiados."); }
+  catch (e) { const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); toast("Textos copiados."); }
+};
+
+// =====================================================================
+// Exportação MP4 (WebCodecs + mp4-muxer)
+// =====================================================================
+let cancelar = false;
+$("#btn-cancel").onclick = () => (cancelar = true);
+async function escolherCodec(W, H) {
+  const opts = [["avc", "avc1.640033"], ["avc", "avc1.640028"], ["avc", "avc1.4d0033"], ["avc", "avc1.42003e"], ["vp9", "vp09.00.41.08"]];
+  for (const [kind, codec] of opts) {
+    const cfg = { codec, width:W, height:H, bitrate:16e6, framerate:FPS };
+    if (kind === "avc") cfg.avc = { format:"avc" };
+    try { const r = await VideoEncoder.isConfigSupported(cfg); if (r.supported) return { kind, cfg }; } catch (e) {}
+  }
+  return null;
+}
+$("#btn-export").onclick = async () => {
+  if (!("VideoEncoder" in window)) { toast("Este navegador não exporta vídeo. Use o Chrome ou o Edge atualizados."); return; }
+  const tl = montarTimeline(); const L = tl.L;
+  if (!tl.segs.length) { toast("Preencha pelo menos um município válido."); return; }
+  const esc = await escolherCodec(L.W, L.H);
+  if (!esc) { toast("Não foi possível iniciar o codificador de vídeo neste navegador."); return; }
+  playing = false; $("#btn-play").textContent = "▶";
+  const box = $("#export-box"), bar = $("#export-bar"), stx = $("#export-status");
+  box.hidden = false; $("#btn-export").disabled = true; cancelar = false;
+  $("#export-title").textContent = "Gerando vídeo…"; bar.style.width = "0%";
+  const off = document.createElement("canvas"); off.width = L.W; off.height = L.H; const oc = off.getContext("2d");
+  const muxer = new Mp4Muxer.Muxer({ target:new Mp4Muxer.ArrayBufferTarget(), video:{ codec:esc.kind, width:L.W, height:L.H, frameRate:FPS }, fastStart:"in-memory" });
+  let erro = null;
+  const enc = new VideoEncoder({ output:(chunk, meta) => muxer.addVideoChunk(chunk, meta), error:(e) => (erro = e) });
+  enc.configure(esc.cfg);
+  const frames = Math.ceil(tl.total * FPS), t0 = performance.now();
+  try {
+    for (let f = 0; f < frames; f++) {
+      if (cancelar || erro) break;
+      render(oc, f / FPS);
+      const vf = new VideoFrame(off, { timestamp:Math.round((f * 1e6) / FPS), duration:Math.round(1e6 / FPS) });
+      enc.encode(vf, { keyFrame:f % (FPS * 2) === 0 }); vf.close();
+      while (enc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 1));
+      if (f % 6 === 0) {
+        const p = (f + 1) / frames, el = (performance.now() - t0) / 1000, rest = (el / p) * (1 - p);
+        bar.style.width = (p * 100).toFixed(1) + "%"; stx.textContent = `${Math.round(p * 100)}% · faltam ~${Math.ceil(rest)} s`;
+        await new Promise((r) => setTimeout(r, 0));
+      }
+    }
+    if (erro) throw erro;
+    if (cancelar) { enc.close(); stx.textContent = "Exportação cancelada."; return; }
+    await enc.flush(); enc.close(); muxer.finalize();
+    const blob = new Blob([muxer.target.buffer], { type:"video/mp4" });
+    const hoje = new Date(); hoje.setDate(hoje.getDate() + (+S.periodo || 0));
+    const nome = `previsao-rn_${hoje.toISOString().slice(0, 10)}_${S.fmt === "h" ? "horizontal" : "vertical"}.mp4`;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    bar.style.width = "100%"; $("#export-title").textContent = "Vídeo pronto";
+    stx.textContent = `${nome} · ${fmtTime(tl.total)} · ${(blob.size / 1048576).toFixed(1)} MB` + (esc.kind === "vp9" ? " · formato VP9 (este navegador não gera H.264)" : "");
+  } catch (e) {
+    $("#export-title").textContent = "Erro na exportação"; stx.textContent = String(e && e.message || e);
+  } finally { $("#btn-export").disabled = false; }
+};
+
+// =====================================================================
+// Início: carrega as fontes e começa
+// =====================================================================
+(async function iniciar() {
+  try {
+    await Promise.all(Object.entries(window.FONTES).map(async ([w, b64]) => {
+      const f = new FontFace("Plus Jakarta Sans", `url(data:font/woff2;base64,${b64})`, { weight:w }); await f.load(); document.fonts.add(f);
+    }));
+  } catch (e) { console.warn("Fonte não carregada", e); }
+  const logo = $("#logo"); iconCanvases.add(logo); logo.dataset.icon = "sol-nuvens";
+  montarCidades(); atualizarTudo();
+  playT = T_INTRO + T_CARD + 0.8; // abre mostrando a 1ª cidade já revelada
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
