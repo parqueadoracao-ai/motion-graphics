@@ -23,6 +23,34 @@ public/whoosh.wav    # gerado por scripts/make-whoosh.py (sintetizado, sem sampl
 `timing.ts` próprio, e registre a composição em `src/Root.tsx`. Reaproveite `src/Whoosh.tsx`.
 Adicione um script `render:<nome>` no `package.json` gerando `out/<nome>.mp4`.
 
+### Tempo RN — Previsão do Tempo RN (app HTML, não Remotion)
+
+`previsao-rn/` é um editor em HTML que gera o MP4 no navegador (WebCodecs + mp4-muxer).
+Edite `previsao-rn/app.html` e rode `npm run build:previsao-rn` para gerar `previsao-rn/previsao-rn-vX.Y.Z.html`
+(arquivo único entregue ao usuário, versionado). Detalhes em `previsao-rn/README.md`.
+**Versão:** toda alteração entregue sobe o número em `previsao-rn/VERSAO` (correção/ajuste → 1.0.1,
+recurso novo → 1.1.0, mudança grande → 2.0.0) e ganha uma entrada em `previsao-rn/HISTORICO.md`.
+O nome do arquivo e o cabeçalho do app mostram a versão; diga a versão ao enviar o arquivo.
+**Variantes para escolha:** `previsao-rn/variantes.json` (ex.: `{"B": {"icones": "traco"}}`) faz o build gerar
+também `previsao-rn-vX.Y.ZB.html`. Quando o cliente escolher, a opção vira a versão oficial seguinte e a entrada
+sai do `variantes.json`. Estilos de ícone disponíveis: `chapado` (padrão) e `traco`.
+**Artefato:** uma variante com `"artefato": true` gera `previsao-rn/artefato.html`, publicado em
+https://claude.ai/artifact/2PRaowBj4TapFWz8DjF44W (capabilities `downloads` e `desktop`). Para atualizar,
+publique o mesmo arquivo nessa URL. Dentro do artefato o `fetch` para outros sites é bloqueado: a busca de
+previsão só funciona no app instalado (via `curl`, com "acesso total") ou no HTML aberto direto no Chrome.
+
+**REGRA DO USUÁRIO — toda mudança no Tempo RN é publicada em todos os lugares, sem precisar pedir:**
+1. Edite `app.html` (fonte única), suba `VERSAO` e registre em `HISTORICO.md`.
+2. `npm run build:previsao-rn` e confira (quadros renderizados; exportação quando mexer em vídeo).
+3. Republique `previsao-rn/artefato.html` **na mesma URL** do artefato acima (o app instalado pelo
+   Claude desktop recebe a versão nova sozinho). Se a versão oficial mudar, a entrada com `"artefato": true`
+   em `variantes.json` passa a ser a versão em uso.
+4. Commit e push no branch da sessão (GitHub).
+5. Envie o HTML ao usuário e diga a versão e o que mudou.
+6. O usuário autorizou fazer tudo sozinho: abra o pull request do branch da sessão para `main` e faça o
+   merge, para que as próximas conversas já partam da versão atual.
+Tema atual: Atlântico com fonte Inter e ícones "chapado geométrico". A fonte Sora fica reservada para o segundo projeto/tema.
+
 ## Padrões
 
 - **Formato:** 1920×1080, 30 fps, H.264 + AAC, salvo em `out/` (pasta ignorada pelo Git).
