@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "remotion studio",
     "sfx": "python3 scripts/make-whoosh.py",
-    "render": "remotion render CartelaTeste out/cartela-teste.mp4"
+    "render": "remotion render CartelaTeste out/cartela-teste.mp4",
+    "render:emanuel": "remotion render Emanuel out/emanuel.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.547",

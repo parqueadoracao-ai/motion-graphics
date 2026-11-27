@@ -16,6 +16,7 @@ src/
   Root.tsx           # registra cada <Composition>
   CartelaTeste.tsx   # 1º projeto (cartela de teste), com Title/Icons/BarChart/timing na raiz de src/
   Whoosh.tsx         # componente de som reutilizável: <Whoosh at={frame} />
+  emanuel/           # cartela "Emanuel — Deus conosco" (cena em SVG, sem áudio)
 public/whoosh.wav    # gerado por scripts/make-whoosh.py (sintetizado, sem samples de terceiros)
 ```
 
