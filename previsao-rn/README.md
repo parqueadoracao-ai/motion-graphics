@@ -15,7 +15,9 @@ Gera o vídeo MP4 (sem som) direto no navegador.
    pode ser ajustada à mão.
 4. Escolha **Horizontal 16:9** ou **Vertical 9:16**, confira na prévia e clique em **Exportar MP4**.
 
-Os dados ficam salvos no próprio navegador do computador.
+Os dados ficam salvos no próprio navegador do computador. **Na primeira abertura de cada dia**, o app
+busca sozinho a previsão dos 4 municípios salvos (e atualiza a data); basta conferir e exportar.
+O rodapé começa com "open-meteo.com"; se usar dados de outra fonte, troque o texto.
 
 ### Ritmo do apresentador
 

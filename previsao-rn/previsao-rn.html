@@ -2202,14 +2202,16 @@ function dataTexto(offset) {
 const novaCidade = (nome, min, max, rain, icon) => ({ nome, min, max, rain, icon, len:"curto", seed:0, text:"", textEdited:false, dur:null, real:"" });
 function padrao() {
   return {
-    fmt:"h", periodo:0, date:dataTexto(0), dateAuto:true, src:"climatempo.com.br", resumo:true, wpm:170,
+    fmt:"h", periodo:0, date:dataTexto(0), dateAuto:true, src:"open-meteo.com", resumo:true, wpm:170, v:2,
     cities:[ novaCidade("Natal",24,31,20,"sol-nuvens"), novaCidade("Mossoró",25,36,0,"sol"), novaCidade("Caicó",23,35,60,"pancadas"), novaCidade("Pau dos Ferros",22,34,80,"trovoadas") ],
   };
 }
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || padrao(); } catch (e) { S = padrao(); }
 if (!S.cities || S.cities.length !== 4) S = padrao();
+if (S.v !== 2) { if (S.src === "climatempo.com.br") S.src = "open-meteo.com"; S.v = 2; }
 if (S.dateAuto) S.date = dataTexto(+S.periodo || 0);
+const hojeISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 let saveT;
 function salvar() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 300); }
 
@@ -2381,9 +2383,7 @@ function drawPin(c, x, y, sc, appear, a, t) {
   c.restore();
 }
 
-function glowText(c, txt, x, y) {
-  c.save(); c.shadowColor = "rgba(255,255,255,.95)"; c.shadowBlur = 18; c.fillText(txt, x, y); c.fillText(txt, x, y); c.restore(); c.fillText(txt, x, y);
-}
+function plainText(c, txt, x, y) { c.fillText(txt, x, y); }
 function drawLabel(c, L, nome, px, py, a) {
   if (a <= 0) return;
   const lb = L.label; const ease = easeOut(clamp(a));
@@ -2397,11 +2397,11 @@ function drawLabel(c, L, nome, px, py, a) {
   if (lb.mode === "side") {
     c.textAlign = "left";
     const x = px + lb.dx - 30 * (1 - ease), y0 = py + lb.dy - (lines.length - 1) * lh;
-    lines.forEach((ln, i) => glowText(c, ln, x, y0 + i * lh));
+    lines.forEach((ln, i) => plainText(c, ln, x, y0 + i * lh));
   } else {
     c.textAlign = "center";
     const y0 = lb.y + 30 * (1 - ease) - (lines.length - 1) * lh;
-    lines.forEach((ln, i) => glowText(c, ln, lb.x, y0 + i * lh));
+    lines.forEach((ln, i) => plainText(c, ln, lb.x, y0 + i * lh));
   }
   c.restore();
 }
@@ -2450,9 +2450,9 @@ function drawChrome(c, L, t) {
   // título
   c.save(); c.globalAlpha = aT; c.translate(0, -30 * (1 - aT)); c.textAlign = "left";
   c.font = font(700, L.eyebrow.size); c.letterSpacing = L.eyebrow.size * 0.22 + "px"; c.fillStyle = TEMA.acc;
-  glowText(c, "RIO GRANDE DO NORTE", L.eyebrow.x, L.eyebrow.y); c.letterSpacing = "0px";
+  plainText(c, "RIO GRANDE DO NORTE", L.eyebrow.x, L.eyebrow.y); c.letterSpacing = "0px";
   c.font = font(800, L.title.size); c.fillStyle = TEMA.ink; c.letterSpacing = -L.title.size * 0.025 + "px";
-  glowText(c, "Previsão do Tempo", L.title.x, L.title.y); c.letterSpacing = "0px";
+  plainText(c, "Previsão do Tempo", L.title.x, L.title.y); c.letterSpacing = "0px";
   c.restore();
   // data
   const dm = S.date.match(/^\s*([^,]+),\s*(\d{1,2})\s+de\s+([a-zç]+)/i);
@@ -2759,11 +2759,19 @@ async function buscar(i) {
     $(".menu", el).querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.k === c.icon)));
     const h = new Date(); st.textContent = `Atualizado às ${String(h.getHours()).padStart(2, "0")}:${String(h.getMinutes()).padStart(2, "0")} · Open-Meteo`; st.className = "c-status ok";
     atualizarTudo();
+    return true;
   } catch (e) {
     st.textContent = "Não foi possível buscar (sem internet?). Preencha à mão."; st.className = "c-status err";
+    return false;
   }
 }
-$("#btn-fetch-all").onclick = () => S.cities.forEach((_, i) => buscar(i));
+async function buscarTodos() {
+  const idx = S.cities.map((c, i) => (munOf(c) ? i : -1)).filter((i) => i >= 0);
+  const ok = await Promise.all(idx.map(buscar));
+  if (idx.length && ok.every(Boolean)) { S.ultimaBusca = hojeISO(); salvar(); return true; }
+  return false;
+}
+$("#btn-fetch-all").onclick = buscarTodos;
 
 // copiar textos
 $("#btn-copy").onclick = async () => {
@@ -2843,6 +2851,13 @@ $("#btn-export").onclick = async () => {
   montarCidades(); atualizarTudo();
   playT = T_INTRO + T_CARD + 0.8; // abre mostrando a 1ª cidade já revelada
   requestAnimationFrame(loop);
+  // dia novo: atualiza a previsão sozinho ao abrir (uma vez por dia)
+  if (S.ultimaBusca !== hojeISO()) {
+    if (S.dateAuto) { S.date = dataTexto(+S.periodo || 0); $("#f-date").value = S.date; }
+    toast("Atualizando a previsão de hoje…");
+    if (await buscarTodos()) toast("Previsão atualizada para hoje. Confira os ícones antes de exportar.");
+    else toast("Não foi possível atualizar sozinho. Use “Buscar previsão dos 4” ou preencha à mão.");
+  }
 })();
 </script>
 </body>
