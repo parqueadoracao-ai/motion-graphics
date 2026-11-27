@@ -8,7 +8,7 @@
 :root{
   --bg:#EEF3F8; --panel:#FFFFFF; --ink:#0E2240; --muted:#5B6B85; --line:#DCE4EE; --soft:#F5F8FC;
   --acc:#1F5FD1; --acc-soft:#E6EFFD; --max:#EE5A2A; --err:#C62828; --ok:#16794A;
-  --font:"Roboto",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:500 14px/1.45 var(--font)}
@@ -102,7 +102,7 @@ textarea{resize:vertical;line-height:1.5}
 </head>
 <body>
 <header class="top">
-  <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · Roboto · 167 municípios · <b>v__VERSAO__</b></p></div></div>
+  <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · Inter · 167 municípios · <b>v__VERSAO__</b></p></div></div>
   <div class="top-actions">
     <button class="btn" id="btn-copy" type="button">Copiar textos do apresentador</button>
     <button class="btn pri" id="btn-export" type="button">Exportar MP4</button>
@@ -175,7 +175,7 @@ textarea{resize:vertical;line-height:1.5}
 const TEMA = {
   sea1:"#86B3E0", sea2:"#ADCDEC", neigh:"#EEF3F8", neighS:"#C7D7EA", land:"#FFFFFF", lines:"#DCE6F1",
   border:"#7FA6D3", hl:"#D3E3FF", ink:"#0E2240", acc:"#1F5FD1", muted:"#5B6B85",
-  min:"#1F5FD1", minbg:"#E6EFFD", max:"#EE5A2A", maxbg:"#FFEEE6", font:'"Roboto"',
+  min:"#1F5FD1", minbg:"#1F5FD1", max:"#EE5A2A", maxbg:"#E4511C", font:'"Inter"',
 };
 const FPS_OPCOES = [30, 60];
 // ---- tempos (segundos) ----
@@ -445,8 +445,8 @@ function montarTimeline() {
 // Renderização de um quadro
 // =====================================================================
 const PIN = new Path2D("M34 90 C34 90 4 56 4 34 A30 30 0 1 1 64 34 C64 56 34 90 34 90Z");
-// pesos pedidos no desenho → pesos da Roboto embutidos (400, 500, 700, 900)
-const PESO = { 500:400, 600:500, 700:500, 800:700, 900:900 };
+// pesos pedidos no desenho → pesos da Inter embutidos (500, 600, 800, 900)
+const PESO = { 500:500, 600:600, 700:600, 800:800, 900:900 };
 function font(w, px) { return `${PESO[w] || w} ${px}px ${TEMA.font}, Arial, sans-serif`; }
 function wrap(c, txt, maxW) {
   const words = String(txt).split(/\s+/); const lines = []; let line = "";
@@ -548,9 +548,9 @@ function drawCard(c, L, city, a, dy, t) {
   [["MÍN", city.min, TEMA.min, TEMA.minbg], ["MÁX", city.max, TEMA.max, TEMA.maxbg]].forEach(([lab, v, col, bg], i) => {
     const bx = x + k.pad + i * (bw + gap);
     c.fillStyle = bg; c.beginPath(); c.roundRect(bx, by, bw, k.boxH, 24); c.fill();
-    c.fillStyle = col; c.font = font(700, k.lab); c.letterSpacing = k.lab * 0.16 + "px";
-    c.fillText(lab, bx + 24, by + 18 + k.lab); c.letterSpacing = "0px";
-    c.font = font(900, k.num); c.fillText((hasNum(v) ? Math.round(v) : "–") + "°", bx + 22, by + k.boxH - 20);
+    c.fillStyle = "rgba(255,255,255,.85)"; c.font = font(800, k.lab); c.letterSpacing = k.lab * 0.16 + "px";
+    c.fillText(lab, bx + 24, by + 18 + k.lab); c.letterSpacing = -k.num * 0.03 + "px";
+    c.fillStyle = "#FFFFFF"; c.font = font(900, k.num); c.fillText((hasNum(v) ? Math.round(v) : "–") + "°", bx + 22, by + k.boxH - 20); c.letterSpacing = "0px";
   });
   c.restore();
 }
@@ -562,7 +562,7 @@ function drawChrome(c, L, t) {
   c.save(); c.globalAlpha = aT; c.translate(0, -30 * (1 - aT)); c.textAlign = "left";
   c.font = font(700, L.eyebrow.size); c.letterSpacing = L.eyebrow.size * 0.22 + "px"; c.fillStyle = TEMA.acc;
   plainText(c, "RIO GRANDE DO NORTE", L.eyebrow.x, L.eyebrow.y); c.letterSpacing = "0px";
-  c.font = font(800, L.title.size); c.fillStyle = TEMA.ink; c.letterSpacing = -L.title.size * 0.01 + "px";
+  c.font = font(800, L.title.size); c.fillStyle = TEMA.ink; c.letterSpacing = -L.title.size * 0.025 + "px";
   plainText(c, "Previsão do Tempo", L.title.x, L.title.y); c.letterSpacing = "0px";
   c.restore();
   // data
