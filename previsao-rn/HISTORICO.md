@@ -5,6 +5,11 @@ Numeração `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** (1.**1**.0): recurso novo (ex.: período "Próximos 4 dias", novo tema).
 - **MAIOR** (**2**.0.0): mudança grande que altera o jeito de usar.
 
+## 1.1.3 — 27/11/2026
+
+- Divisas entre os municípios mais visíveis (cor mais forte e traço um pouco mais grosso de perto),
+  ainda discretas.
+
 ## 1.1.2 — 27/11/2026
 
 - Fonte trocada de Roboto para Inter: mesma família de desenho, mais encorpada e moderna

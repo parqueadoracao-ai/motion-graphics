@@ -173,7 +173,7 @@ textarea{resize:vertical;line-height:1.5}
 // Tema Atlântico
 // =====================================================================
 const TEMA = {
-  sea1:"#86B3E0", sea2:"#ADCDEC", neigh:"#EEF3F8", neighS:"#C7D7EA", land:"#FFFFFF", lines:"#DCE6F1",
+  sea1:"#86B3E0", sea2:"#ADCDEC", neigh:"#EEF3F8", neighS:"#C7D7EA", land:"#FFFFFF", lines:"#B9CADF",
   border:"#7FA6D3", hl:"#D3E3FF", ink:"#0E2240", acc:"#1F5FD1", muted:"#5B6B85",
   min:"#1F5FD1", minbg:"#1F5FD1", max:"#EE5A2A", maxbg:"#E4511C", font:'"Inter"',
 };
@@ -462,7 +462,7 @@ function drawMap(c, cam, alpha, marks) {
   c.strokeStyle = TEMA.neighS; c.lineWidth = 1.2 * px; c.stroke(P_VIZ);
   c.save(); c.shadowColor = "rgba(14,34,64,.28)"; c.shadowBlur = 30; c.shadowOffsetY = 10; c.fillStyle = TEMA.land; c.fill(P_RN); c.restore();
   for (const mk of marks) if (mk.fill > 0) { c.save(); c.globalAlpha = alpha * mk.fill; c.fillStyle = TEMA.hl; c.fill(munPath(mk.m)); c.restore(); }
-  c.strokeStyle = TEMA.lines; c.lineWidth = 1.1 * px; c.lineJoin = "round"; c.stroke(P_ALL);
+  c.strokeStyle = TEMA.lines; c.lineWidth = Math.min(1.6, 0.9 + cam.s * 0.35) * px; c.lineJoin = "round"; c.stroke(P_ALL);
   c.strokeStyle = TEMA.border; c.lineWidth = 2.2 * px; c.stroke(P_RN);
   for (const mk of marks) if (mk.line > 0 && mk.lineA > 0) {
     c.save(); c.globalAlpha = alpha * mk.lineA; c.strokeStyle = TEMA.acc; c.lineWidth = 4.5 * px; c.lineJoin = "round"; c.lineCap = "round";
