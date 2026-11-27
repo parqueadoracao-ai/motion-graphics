@@ -5,6 +5,12 @@ Numeração `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** (1.**1**.0): recurso novo (ex.: período "Próximos 4 dias", novo tema).
 - **MAIOR** (**2**.0.0): mudança grande que altera o jeito de usar.
 
+## 1.1.4 — 27/11/2026
+
+- Caixas de mínima e máxima em tom médio (fundo azul/laranja claro e número escuro), menos contraste
+  que na 1.1.3.
+- Divisas entre municípios mais discretas com o mapa inteiro (abertura e final); com zoom continuam visíveis.
+
 ## 1.1.3 — 27/11/2026
 
 - Divisas entre os municípios mais visíveis (cor mais forte e traço um pouco mais grosso de perto),
