@@ -34,6 +34,10 @@ O nome do arquivo e o cabeçalho do app mostram a versão; diga a versão ao env
 **Variantes para escolha:** `previsao-rn/variantes.json` (ex.: `{"B": {"icones": "traco"}}`) faz o build gerar
 também `previsao-rn-vX.Y.ZB.html`. Quando o cliente escolher, a opção vira a versão oficial seguinte e a entrada
 sai do `variantes.json`. Estilos de ícone disponíveis: `chapado` (padrão) e `traco`.
+**Artefato:** uma variante com `"artefato": true` gera `previsao-rn/artefato.html`, publicado em
+https://claude.ai/artifact/2PRaowBj4TapFWz8DjF44W (capabilities `downloads` e `desktop`). Para atualizar,
+publique o mesmo arquivo nessa URL. Dentro do artefato o `fetch` para outros sites é bloqueado: a busca de
+previsão só funciona no app instalado (via `curl`, com "acesso total") ou no HTML aberto direto no Chrome.
 Tema atual: Atlântico com fonte Inter e ícones "chapado geométrico". A fonte Sora fica reservada para o segundo projeto/tema.
 
 ## Padrões

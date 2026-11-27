@@ -13,6 +13,9 @@ Numeração `MAIOR.MENOR.CORREÇÃO`:
   desencontrado, com arestas e serrilhado).
 - Sombra do mapa mais curta e suave, sem borrar a divisa com os estados vizinhos.
 - Estados vizinhos (Ceará, Paraíba etc.) um pouco mais escuros, para diferenciar do RN.
+- Publicada também como artefato no claude.ai (https://claude.ai/artifact/2PRaowBj4TapFWz8DjF44W):
+  salva o MP4 pelo sistema de downloads do Claude, tem botão "Instalar como app" e, no app instalado,
+  busca a previsão pelo `curl` do computador (pede "acesso total" uma vez).
 
 ## 1.1.5B — 27/11/2026 (variante para escolha)
 

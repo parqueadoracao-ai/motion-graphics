@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Previsão do Tempo RN · v__VERSAO__</title>
+<title>__TITULO__</title>
+<script type="application/json" id="claude-artifacts-manifest">{"permissions": ["full-access"]}</script>
 <style>
 :root{
   --bg:#EEF3F8; --panel:#FFFFFF; --ink:#0E2240; --muted:#5B6B85; --line:#DCE4EE; --soft:#F5F8FC;
@@ -104,6 +105,7 @@ textarea{resize:vertical;line-height:1.5}
 <header class="top">
   <div class="brand"><canvas id="logo" width="88" height="88"></canvas><div><h1>Previsão do Tempo RN</h1><p>Cartela animada · tema Atlântico · Inter · 167 municípios · <b>v__VERSAO__</b></p></div></div>
   <div class="top-actions">
+    <button class="btn" id="btn-install" type="button" hidden>Instalar como app</button>
     <button class="btn" id="btn-copy" type="button">Copiar textos do apresentador</button>
     <button class="btn pri" id="btn-export" type="button">Exportar MP4</button>
   </div>
@@ -912,15 +914,53 @@ function sugerirIcone(code, prob, mm, nuvens) {
   if (nuvens < 80) return "sol-carregado";
   return "nublado";
 }
-async function buscar(i) {
+// =====================================================================
+// Recursos do Claude (só existem quando o app roda como artefato no claude.ai)
+// =====================================================================
+const CLAUDE = { downloads:null, desktop:null };
+const emArtefato = !!(window.claude && window.claude.use);
+if (emArtefato) {
+  window.claude.use("downloads").then((d) => (CLAUDE.downloads = d)).catch(() => {});
+  window.claude.use("desktop").then(async (d) => {
+    CLAUDE.desktop = d;
+    if (d && d.app && d.app.dock) {         // dentro do app instalado: ícone próprio
+      const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d");
+      g.fillStyle = "#86B3E0"; g.beginPath(); g.roundRect(0, 0, 256, 256, 56); g.fill();
+      drawIcon(g, "sol-nuvens", 28, 28, 200, 0.6);
+      d.app.dock.setIcon(c.toDataURL("image/png")).catch(() => {});
+    } else if (d && d.install && (await d.install.state().catch(() => "")) === "available") {
+      const b = $("#btn-install"); b.hidden = false;
+      b.onclick = () => d.install.request().then((r) => toast(r === "installed" ? "Instalando o app…" : "Instalação não concluída.")).catch(() => toast("Não foi possível instalar agora."));
+    }
+  }).catch(() => {});
+}
+// Baixa um JSON. No navegador comum usa fetch. Dentro do artefato o fetch para outros sites é bloqueado;
+// no app instalado pelo Claude desktop, com "acesso total" liberado, a busca é feita pelo curl do computador.
+let pedidoAcesso = null;
+async function baixarJSON(url, porClique) {
+  try { const r = await fetch(url); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
+  catch (erroFetch) {
+    const dk = CLAUDE.desktop;
+    if (!dk || !dk.childProcess || !dk.permissions) throw erroFetch;
+    let st = await dk.permissions.state("full-access").catch(() => "unavailable");
+    if (st === "prompt" && porClique) {
+      pedidoAcesso = pedidoAcesso || dk.permissions.request(["full-access"]).catch(() => ({}));
+      st = (await pedidoAcesso)["full-access"] || "unavailable"; pedidoAcesso = null;
+    }
+    if (st !== "granted") throw erroFetch;
+    const r = await dk.childProcess.exec(`curl -s -m 20 "${url}"`, { timeout:25000 });
+    if (r.code !== 0 || !r.stdout) throw new Error("curl " + r.code);
+    return JSON.parse(r.stdout);
+  }
+}
+async function buscar(i, porClique = true) {
   const c = S.cities[i], m = munOf(c), el = document.querySelector(`.city[data-i="${i}"]`), st = $(".c-status", el);
   if (!m) { st.textContent = "Escolha um município válido primeiro."; st.className = "c-status err"; return; }
   st.textContent = "Buscando…"; st.className = "c-status";
   try {
     const [lon, lat] = m.ll, dia = +S.periodo || 0;
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,cloud_cover_mean&timezone=America%2FFortaleza&forecast_days=${dia + 1}`;
-    const r = await fetch(url); if (!r.ok) throw new Error("HTTP " + r.status);
-    const d = (await r.json()).daily;
+    const d = (await baixarJSON(url, porClique)).daily;
     c.min = Math.round(d.temperature_2m_min[dia]); c.max = Math.round(d.temperature_2m_max[dia]);
     c.rain = d.precipitation_probability_max[dia] ?? ""; c.icon = sugerirIcone(d.weather_code[dia], c.rain, d.precipitation_sum?.[dia], d.cloud_cover_mean?.[dia]);
     if (!c.textEdited) c.text = "";
@@ -936,13 +976,13 @@ async function buscar(i) {
     return false;
   }
 }
-async function buscarTodos() {
+async function buscarTodos(porClique = true) {
   const idx = S.cities.map((c, i) => (munOf(c) ? i : -1)).filter((i) => i >= 0);
   const ok = await Promise.all(idx.map(buscar));
   if (idx.length && ok.every(Boolean)) { S.ultimaBusca = hojeISO(); salvar(); return true; }
   return false;
 }
-$("#btn-fetch-all").onclick = buscarTodos;
+$("#btn-fetch-all").onclick = () => buscarTodos(true);
 
 // copiar textos
 $("#btn-copy").onclick = async () => {
@@ -1001,9 +1041,17 @@ $("#btn-export").onclick = async () => {
     const blob = new Blob([muxer.target.buffer], { type:"video/mp4" });
     const hoje = new Date(); hoje.setDate(hoje.getDate() + (+S.periodo || 0));
     const nome = `previsao-rn_${hoje.toISOString().slice(0, 10)}_${S.fmt === "h" ? "horizontal" : "vertical"}.mp4`;
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
     bar.style.width = "100%"; $("#export-title").textContent = "Vídeo pronto";
+    if (CLAUDE.downloads) {
+      try { await CLAUDE.downloads.save({ filename:nome, data:blob }); }
+      catch (e) {
+        const msg = { declined:"Você cancelou o salvamento. Clique em Exportar MP4 de novo para gerar outra vez.", rate_limited:"Já existe um pedido de salvamento aberto. Aguarde e tente de novo.", host_unavailable:"Este app não consegue salvar arquivos. Abra o artefato no navegador do computador." }[e && e.code];
+        $("#export-title").textContent = "Vídeo não salvo"; stx.textContent = msg || "Não foi possível salvar o vídeo aqui."; return;
+      }
+    } else {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    }
     stx.textContent = `${nome} · ${fmtTime(tl.total)} · ${FPS} fps · ${(blob.size / 1048576).toFixed(1)} MB` + (esc.kind === "vp9" ? " · formato VP9 (este navegador não gera H.264)" : "");
   } catch (e) {
     $("#export-title").textContent = "Erro na exportação"; stx.textContent = String(e && e.message || e);
@@ -1027,8 +1075,8 @@ $("#btn-export").onclick = async () => {
   if (S.ultimaBusca !== hojeISO()) {
     if (S.dateAuto) { S.date = dataTexto(+S.periodo || 0); $("#f-date").value = S.date; }
     toast("Atualizando a previsão de hoje…");
-    if (await buscarTodos()) toast("Previsão atualizada para hoje. Confira os ícones antes de exportar.");
-    else toast("Não foi possível atualizar sozinho. Use “Buscar previsão dos 4” ou preencha à mão.");
+    if (await buscarTodos(false)) toast("Previsão atualizada para hoje. Confira os ícones antes de exportar.");
+    else toast(emArtefato ? "Clique em “Buscar previsão dos 4” para atualizar (no app instalado) ou preencha à mão." : "Não foi possível atualizar sozinho. Use “Buscar previsão dos 4” ou preencha à mão.");
   }
 })();
 </script>

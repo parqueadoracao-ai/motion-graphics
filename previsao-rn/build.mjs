@@ -165,7 +165,15 @@ const builds = [...(principal ? [["", { icones: "chapado" }]] : []), ...Object.e
 const saidas = builds.map(([suf]) => `previsao-rn-v${versao}${suf}.html`);
 for (const f of readdirSync(here)) { const m = f.match(/^previsao-rn(?:-v([\d.]+)[A-Z]?)?\.html$/); if (m && m[1] !== versao) unlinkSync(join(here, f)); }
 builds.forEach(([suf, cfg], i) => {
-  const out = html.replaceAll("__VERSAO__", versao + suf).replaceAll("__ESTILO_ICONES__", cfg.icones || "chapado");
+  const out = html.replaceAll("__TITULO__", `Previsão do Tempo RN · v${versao}${suf}`).replaceAll("__VERSAO__", versao + suf).replaceAll("__ESTILO_ICONES__", cfg.icones || "chapado");
   writeFileSync(join(here, saidas[i]), out);
+  // "artefato": true → também gera artefato.html (sem <html>/<head>/<body>, título fixo = nome do app instalado)
+  if (cfg.artefato) {
+    const art = html.replaceAll("__TITULO__", "Previsão do Tempo RN").replaceAll("__VERSAO__", versao + suf).replaceAll("__ESTILO_ICONES__", cfg.icones || "chapado")
+      .replace(/^<!doctype html>\s*<html[^>]*>\s*<head>\s*/i, "").replace(/<meta charset="utf-8">\s*<meta name="viewport"[^>]*>\s*/i, "")
+      .replace(/<\/head>\s*<body>/i, "").replace(/<\/body>\s*<\/html>\s*$/i, "");
+    writeFileSync(join(here, "artefato.html"), art);
+    console.log(`artefato.html: ${(art.length / 1024).toFixed(0)} KB (v${versao}${suf})`);
+  }
   console.log(`${saidas[i]}: ${(out.length / 1024).toFixed(0)} KB · ${municipios.length} municípios · ícones ${cfg.icones || "chapado"}`);
 });

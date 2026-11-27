@@ -1,4 +1,4 @@
 {
   "_principal": false,
-  "C": { "icones": "traco" }
+  "C": { "icones": "traco", "artefato": true }
 }
