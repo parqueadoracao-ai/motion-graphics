@@ -5,6 +5,15 @@ Numeração `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** (1.**1**.0): recurso novo (ex.: período "Próximos 4 dias", novo tema).
 - **MAIOR** (**2**.0.0): mudança grande que altera o jeito de usar.
 
+## 1.1.5C — 27/11/2026 (variante para escolha)
+
+- Base da 1.1.5B (ícones traço fino).
+- Contorno do RN refeito a partir das próprias divisas dos municípios: agora coincide exatamente com
+  as linhas internas e com o destaque das cidades (antes vinha de outro arquivo do IBGE e ficava
+  desencontrado, com arestas e serrilhado).
+- Sombra do mapa mais curta e suave, sem borrar a divisa com os estados vizinhos.
+- Estados vizinhos (Ceará, Paraíba etc.) um pouco mais escuros, para diferenciar do RN.
+
 ## 1.1.5B — 27/11/2026 (variante para escolha)
 
 - Igual à 1.1.5, com ícones no estilo "traço fino" (linha, sem preenchimento) no lugar do

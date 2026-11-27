@@ -108,7 +108,36 @@ const bounds = [
 ];
 // estados vizinhos (só contexto, desenhados como terra clara)
 const vizinhos = [23, 25, 26, 27, 28, 29].map(uf).join("");
-const mapa = { bounds, rn: uf(24), vizinhos, municipios };
+// Contorno do RN montado a partir das próprias divisas dos municípios (arestas que pertencem a um só
+// município). Assim o contorno coincide exatamente com as linhas internas e com o destaque das cidades.
+function bordaDosMunicipios() {
+  const key = (p) => p[0].toFixed(6) + "," + p[1].toFixed(6);
+  const pts = new Map(), cnt = new Map();
+  for (const f of malha.features) for (const ring of rings(f.geometry))
+    for (let i = 1; i < ring.length; i++) {
+      const a = key(ring[i - 1]), b = key(ring[i]); if (a === b) continue;
+      pts.set(a, ring[i - 1]); pts.set(b, ring[i]);
+      const k = a < b ? a + "|" + b : b + "|" + a; cnt.set(k, (cnt.get(k) || 0) + 1);
+    }
+  const viz = new Map(); const add = (a, b) => { if (!viz.has(a)) viz.set(a, []); viz.get(a).push(b); };
+  for (const [k, n] of cnt) if (n === 1) { const [a, b] = k.split("|"); add(a, b); add(b, a); }
+  const usadas = new Set(), aneis = [];
+  for (const inicio of viz.keys()) {
+    for (const prox of viz.get(inicio)) {
+      const e0 = inicio < prox ? inicio + "|" + prox : prox + "|" + inicio; if (usadas.has(e0)) continue;
+      const anel = [inicio]; let ant = inicio, at = prox; usadas.add(e0);
+      while (at !== inicio) {
+        anel.push(at);
+        const seg = viz.get(at).find((q) => { const e = at < q ? at + "|" + q : q + "|" + at; return q !== ant && !usadas.has(e); });
+        if (!seg) break;
+        usadas.add(at < seg ? at + "|" + seg : seg + "|" + at); ant = at; at = seg;
+      }
+      aneis.push(anel.map((k) => pts.get(k)));
+    }
+  }
+  return pathOf({ type: "Polygon", coordinates: aneis.filter((a) => a.length > 3).map((a) => [...a, a[0]]) });
+}
+const mapa = { bounds, rn: bordaDosMunicipios(), vizinhos, municipios };
 
 // ---------- fontes e bibliotecas ----------
 const fontDir = join(root, "node_modules/@fontsource/inter/files");
@@ -130,9 +159,11 @@ if (!/^\d+\.\d+\.\d+$/.test(versao)) throw new Error("VERSAO inválida: " + vers
 //   { "B": { "icones": "traco" } }   → gera também previsao-rn-v<VERSAO>B.html
 let variantes = {};
 try { variantes = JSON.parse(readFileSync(join(here, "variantes.json"), "utf8")); } catch (e) {}
-const builds = [["", { icones: "chapado" }], ...Object.entries(variantes)];
+// "_principal": false gera só as variantes (as já entregues da mesma versão ficam como estão)
+const principal = variantes._principal !== false; delete variantes._principal;
+const builds = [...(principal ? [["", { icones: "chapado" }]] : []), ...Object.entries(variantes)];
 const saidas = builds.map(([suf]) => `previsao-rn-v${versao}${suf}.html`);
-for (const f of readdirSync(here)) if (/^previsao-rn(-v[\d.]+[A-Z]?)?\.html$/.test(f) && !saidas.includes(f)) unlinkSync(join(here, f));
+for (const f of readdirSync(here)) { const m = f.match(/^previsao-rn(?:-v([\d.]+)[A-Z]?)?\.html$/); if (m && m[1] !== versao) unlinkSync(join(here, f)); }
 builds.forEach(([suf, cfg], i) => {
   const out = html.replaceAll("__VERSAO__", versao + suf).replaceAll("__ESTILO_ICONES__", cfg.icones || "chapado");
   writeFileSync(join(here, saidas[i]), out);
