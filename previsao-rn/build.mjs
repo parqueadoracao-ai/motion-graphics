@@ -1,9 +1,9 @@
-// Monta previsao-rn/previsao-rn.html (arquivo único, funciona offline) a partir de:
+// Monta previsao-rn/previsao-rn-v<VERSAO>.html (arquivo único, funciona offline) a partir de:
 //   app.html                    — editor + animação + exportação
 //   dados/*.geojson, *.json     — malhas e nomes oficiais do IBGE (baixados uma vez, ver README)
 //   node_modules                — fonte Plus Jakarta Sans e mp4-muxer
 // Uso: npm run build:previsao-rn
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -123,5 +123,11 @@ const inject = (marker, code) => {
 inject("/*__MAPA__*/", "window.MAPA_RN=" + JSON.stringify(mapa) + ";");
 inject("/*__FONTES__*/", "window.FONTES=" + JSON.stringify(fontes) + ";");
 inject("/*__MP4MUXER__*/", muxer);
-writeFileSync(join(here, "previsao-rn.html"), html);
-console.log(`previsao-rn.html: ${(html.length / 1024).toFixed(0)} KB · ${municipios.length} municípios`);
+// versão: previsao-rn/VERSAO (ex.: 1.0.0). O arquivo gerado leva a versão no nome e no cabeçalho do app.
+const versao = readFileSync(join(here, "VERSAO"), "utf8").trim();
+if (!/^\d+\.\d+\.\d+$/.test(versao)) throw new Error("VERSAO inválida: " + versao);
+html = html.replaceAll("__VERSAO__", versao);
+const saida = `previsao-rn-v${versao}.html`;
+for (const f of readdirSync(here)) if (/^previsao-rn(-v[\d.]+)?\.html$/.test(f) && f !== saida) unlinkSync(join(here, f));
+writeFileSync(join(here, saida), html);
+console.log(`${saida}: ${(html.length / 1024).toFixed(0)} KB · ${municipios.length} municípios`);

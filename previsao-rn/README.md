@@ -5,7 +5,7 @@ Gera o vídeo MP4 (sem som) direto no navegador.
 
 ## Como usar
 
-1. Abra `previsao-rn.html` no **Chrome** ou no **Edge** (duplo clique no arquivo). Funciona offline;
+1. Abra `previsao-rn-vX.Y.Z.html` (a versão mais recente) no **Chrome** ou no **Edge** (duplo clique no arquivo). Funciona offline;
    só a busca automática da previsão precisa de internet.
 2. Preencha os 4 municípios: nome (com autocompletar), mínima, máxima, chance de chuva e condição
    (clique na setinha ou use o botão direito para escolher o ícone). **⟳ Buscar previsão** preenche
@@ -39,7 +39,8 @@ Os tempos ficam no topo do script em `app.html` (`T_INTRO`, `T_TRAVEL`, …).
 
 ## Desenvolvimento
 
-`previsao-rn.html` é gerado; edite `app.html` e rode:
+`previsao-rn-vX.Y.Z.html` é gerado; edite `app.html`, suba a versão em `VERSAO`, registre a mudança em
+`HISTORICO.md` e rode:
 
 ```bash
 npm run build:previsao-rn

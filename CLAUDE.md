@@ -26,8 +26,11 @@ Adicione um script `render:<nome>` no `package.json` gerando `out/<nome>.mp4`.
 ### Previsão do Tempo RN (app HTML, não Remotion)
 
 `previsao-rn/` é um editor em HTML que gera o MP4 no navegador (WebCodecs + mp4-muxer).
-Edite `previsao-rn/app.html` e rode `npm run build:previsao-rn` para gerar `previsao-rn/previsao-rn.html`
+Edite `previsao-rn/app.html` e rode `npm run build:previsao-rn` para gerar `previsao-rn/previsao-rn-vX.Y.Z.html`
 (arquivo único entregue ao usuário, versionado). Detalhes em `previsao-rn/README.md`.
+**Versão:** toda alteração entregue sobe o número em `previsao-rn/VERSAO` (correção/ajuste → 1.0.1,
+recurso novo → 1.1.0, mudança grande → 2.0.0) e ganha uma entrada em `previsao-rn/HISTORICO.md`.
+O nome do arquivo e o cabeçalho do app mostram a versão; diga a versão ao enviar o arquivo.
 Tema atual: Atlântico (Plus Jakarta Sans). A fonte Sora fica reservada para o segundo projeto/tema.
 
 ## Padrões
