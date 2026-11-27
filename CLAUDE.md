@@ -49,7 +49,7 @@ previsão só funciona no app instalado (via `curl`, com "acesso total") ou no H
 5. Envie o HTML ao usuário e diga a versão e o que mudou.
 6. O usuário autorizou fazer tudo sozinho: abra o pull request do branch da sessão para `main` e faça o
    merge, para que as próximas conversas já partam da versão atual.
-Tema atual: Atlântico com fonte Inter e ícones "chapado geométrico". A fonte Sora fica reservada para o segundo projeto/tema.
+Versão em uso: 1.6.0 — tema Atlântico, fonte Inter, ícones "traço fino" (em `variantes.json`, entrada `""`). A fonte Sora fica reservada para o segundo projeto/tema.
 
 ## Padrões
 
